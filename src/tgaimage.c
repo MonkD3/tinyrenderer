@@ -1,4 +1,4 @@
-#include "tgaimage.h"
+#include "include/tgaimage.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

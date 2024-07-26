@@ -61,7 +61,6 @@ void TGAImage_copy(TGAImage_t const * src, TGAImage_t* dest){
 
 void TGAImage_destroy(TGAImage_t* img){
     if (img->data) free(img->data);
-    free(img);
 }
 
 bool TGAImage_load_rle_data(TGAImage_t const * const img, FILE* in){
@@ -80,7 +79,7 @@ bool TGAImage_load_rle_data(TGAImage_t const * const img, FILE* in){
 			chunkheader++;
 			for (uint8_t i = 0; i < chunkheader; i++) {
                 nread = fread(colorbuffer.raw, 1, img->bytespp, in);
-				if (nread < img->bytespp || ferror(in)) {
+				if (nread < (size_t) img->bytespp || ferror(in)) {
                     fputs("An error occured while reading the header\n", stderr);
 					return false;
 				}
@@ -98,7 +97,7 @@ bool TGAImage_load_rle_data(TGAImage_t const * const img, FILE* in){
 		} else {
 			chunkheader -= 127;
             nread = fread(colorbuffer.raw, 1, img->bytespp, in);
-            if (nread < img->bytespp || ferror(in)) {
+            if (nread < (size_t) img->bytespp || ferror(in)) {
                 fputs("An error occured while reading the header\n", stderr);
                 return false;
             }

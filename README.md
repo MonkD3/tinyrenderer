@@ -63,6 +63,8 @@ Object_init_<description>(Object_t* obj, args);
 Object_destroy(Object_t* obj);
 ```
 
+> [!WARN] The destructor does not free the pointer to the structure! This allows to destroy stack allocated variables as well, but the pointer has to be freed afterward.
+
 Note that the constructor using another instance of the object :
 ```cpp 
 Object(const Object &o) : f1(o.f1), f2(o.f2) ... { }

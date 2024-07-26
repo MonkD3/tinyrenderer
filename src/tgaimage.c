@@ -71,21 +71,21 @@ bool TGAImage_load_rle_data(TGAImage_t const * const img, FILE* in){
 	TGAColor_t colorbuffer;
 	do {
 		uint8_t chunkheader = 0;
-        fread(&chunkheader, 1, 1, in);
-		if (ferror(in)) {
+        size_t nread = fread(&chunkheader, 1, 1, in);
+		if (nread < 1 || ferror(in)) {
 			fputs("An error occured while reading the data\n", stderr);
 			return false;
 		}
 		if (chunkheader<128) {
 			chunkheader++;
-			for (int i = 0; i < chunkheader; i++) {
-                fread(colorbuffer.raw, 1, img->bytespp, in);
-				if (ferror(in)) {
+			for (uint8_t i = 0; i < chunkheader; i++) {
+                nread = fread(colorbuffer.raw, 1, img->bytespp, in);
+				if (nread < img->bytespp || ferror(in)) {
                     fputs("An error occured while reading the header\n", stderr);
 					return false;
 				}
 
-				for (int t = 0; t < img->bytespp; t++) {
+				for (int32_t t = 0; t < img->bytespp; t++) {
 					img->data[currentbyte++] = colorbuffer.raw[t];
                 }
 				currentpixel++;
@@ -97,14 +97,14 @@ bool TGAImage_load_rle_data(TGAImage_t const * const img, FILE* in){
 			}
 		} else {
 			chunkheader -= 127;
-            fread(colorbuffer.raw, 1, img->bytespp, in);
-            if (ferror(in)) {
+            nread = fread(colorbuffer.raw, 1, img->bytespp, in);
+            if (nread < img->bytespp || ferror(in)) {
                 fputs("An error occured while reading the header\n", stderr);
                 return false;
             }
-			for (int i = 0; i < chunkheader; i++) {
+			for (uint8_t i = 0; i < chunkheader; i++) {
 
-				for (int t = 0; t < img->bytespp; t++){
+				for (int32_t t = 0; t < img->bytespp; t++){
 					img->data[currentbyte++] = colorbuffer.raw[t];
                 }
 				currentpixel++;
@@ -130,10 +130,10 @@ bool TGAImage_unload_rle_data(TGAImage_t const * const img, FILE* out){
 		size_t curbyte = curpix*bytespp;
 		uint8_t run_length = 1;
 		bool raw = true;
-		while (curpix+run_length<npixels && run_length<max_chunk_length) {
+		while (curpix + run_length < npixels && run_length < max_chunk_length) {
 			bool succ_eq = true;
-			for (int t=0; succ_eq && t<bytespp; t++) {
-				succ_eq = (data[curbyte+t]==data[curbyte+t+bytespp]);
+			for (int32_t t = 0; succ_eq && t < bytespp; t++) {
+				succ_eq = (data[curbyte+t] == data[curbyte+t+bytespp]);
 			}
 			curbyte += bytespp;
 			if (1==run_length) {
@@ -149,14 +149,15 @@ bool TGAImage_unload_rle_data(TGAImage_t const * const img, FILE* out){
 			run_length++;
 		}
 		curpix += run_length;
-		fputc(raw ? run_length-1 : run_length+127, out);
-		if (ferror(out)) {
+		int ch = fputc(raw ? run_length-1 : run_length+127, out);
+		if (ch == EOF || ferror(out)) {
 			fputs("Can't dump the tga file\n", stderr);
 			return false;
 		}
 
-		fwrite((char *)(data+chunkstart), 1, (raw?run_length*bytespp:bytespp), out);
-		if (ferror(out)) {
+        size_t bytes_to_write = raw?run_length*bytespp:bytespp;
+		size_t nwrite = fwrite((char *)(data+chunkstart), 1, bytes_to_write, out);
+		if (nwrite < bytes_to_write || ferror(out)) {
 			fputs("Can't dump the tga file\n", stderr);
 			return false;
 		}
@@ -190,9 +191,10 @@ bool TGAImage_read_tga_file(TGAImage_t* img, char const *filename){
 	}
 	size_t nbytes = img->bytespp*img->width*img->height;
 	img->data = (uint8_t*)  malloc(sizeof(uint8_t) * nbytes);
+
 	if (3==header.datatypecode || 2==header.datatypecode) {
         nread = fread(img->data, sizeof(uint8_t), nbytes, ifd);
-		if (nread < nbytes) {
+		if (nread < nbytes || ferror(ifd)) {
             fclose(ifd);
 			fprintf(stderr, "An error occured while reading the data\n");
 			return false;
@@ -214,9 +216,7 @@ bool TGAImage_read_tga_file(TGAImage_t* img, char const *filename){
 	if (header.imagedescriptor & 0x10) {
 		TGAImage_flip_horizontally(img);
 	}
-    fprintf(stderr, "%d x %d / %d\n", img->width, img->height, img->bytespp*8);
     fclose(ifd);
-
     return true;
 }
 
@@ -230,23 +230,20 @@ bool TGAImage_write_tga_file(TGAImage_t const * const img, char const *filename,
         fprintf(stderr, "Can't open file '%s'\n", filename);
 		return false;
     }
-	TGA_Header_t header = {0};
+	TGA_Header_t header = {0}; // Zero initialization from C11 !
 	header.bitsperpixel = img->bytespp<<3;
 	header.width  = img->width;
 	header.height = img->height;
 	header.datatypecode = (img->bytespp==GRAYSCALE?(rle?11:3):(rle?10:2));
 	header.imagedescriptor = 0x20; // top-left origin
+                                   //
     size_t nwrite = fwrite(&header, sizeof(header), 1, ofd);
+	if (nwrite < 1 || ferror(ofd)) goto cleanup_on_write_error;
 
-	if (!nwrite) {
-        fclose(ofd);
-        fprintf(stderr, "Can't dump the tga file\n");
-		return false;
-	}
 	if (!rle) {
         size_t nbytes = img->width*img->height*img->bytespp;
         nwrite = fwrite(img->data, sizeof(uint8_t), nbytes, ofd);
-		if (nwrite < nbytes) {
+		if (nwrite < nbytes || ferror(ofd)) {
             fclose(ofd);
             fprintf(stderr, "Can't unload rle data\n");
             return false;
@@ -258,41 +255,39 @@ bool TGAImage_write_tga_file(TGAImage_t const * const img, char const *filename,
             return false;
 		}
 	}
+
     nwrite = fwrite(developer_area_ref, sizeof(uint8_t), sizeof(developer_area_ref), ofd);
-	if (nwrite < sizeof(developer_area_ref)){
-        fclose(ofd);
-        fprintf(stderr, "Can't dump the tga file\n");
-        return false;
-	}
+	if (nwrite < sizeof(developer_area_ref) || ferror(ofd)) goto cleanup_on_write_error;
+
     nwrite = fwrite(extension_area_ref, sizeof(uint8_t), sizeof(extension_area_ref), ofd);
-	if (nwrite < sizeof(extension_area_ref)) {
-        fclose(ofd);
-        fprintf(stderr, "Can't dump the tga file\n");
-        return false;
-	}
+	if (nwrite < sizeof(extension_area_ref) || ferror(ofd)) goto cleanup_on_write_error;
+
     nwrite = fwrite(footer, sizeof(uint8_t), sizeof(footer), ofd);
-	if (nwrite < sizeof(footer)) {
-        fclose(ofd);
-        fprintf(stderr, "Can't dump the tga file\n");
-        return false;
-	}
+	if (nwrite < sizeof(footer) || ferror(ofd)) goto cleanup_on_write_error;
+
     fclose(ofd);
     return true;
+
+    cleanup_on_write_error:
+        fclose(ofd);
+        fprintf(stderr, "Can't dump the tga file\n");
+        return false;
 }
 
 bool TGAImage_flip_horizontally(TGAImage_t* img){
 	if (!img->data) return false;
 
+    TGAColor_t tmp;
 	int32_t half = img->width>>1;
-	for (int i = 0; i < half; i++) {
-		for (int j = 0; j < img->height; j++) {
-            TGAColor_t tmp;
+    int32_t const bytespp = img->bytespp;
+	for (int32_t i = 0; i < half; i++) {
+		for (int32_t j = 0; j < img->height; j++) {
             TGAColor_t* const c1 = TGAImage_get(img, i, j);
             TGAColor_t* const c2 = TGAImage_get(img, img->width - 1 - i, j);
 
-            TGAColor_copy(c1, &tmp, img->bytespp);
-            TGAColor_copy(c2, c1, img->bytespp);
-            TGAColor_copy(&tmp, c2, img->bytespp);
+            TGAColor_copy(c1, &tmp, bytespp);
+            TGAColor_copy(c2, c1, bytespp);
+            TGAColor_copy(&tmp, c2, bytespp);
 		}
 	}
 	return true;
@@ -302,13 +297,14 @@ bool TGAImage_flip_vertically(TGAImage_t* img){
     uint8_t* data = img->data;
 	if (!img->data) return false;
 
-	size_t bytes_per_line = img->width*img->bytespp;
-	uint8_t* line = malloc(bytes_per_line);
+	size_t const bytes_per_line = img->width*img->bytespp;
+	uint8_t* restrict line = malloc(bytes_per_line);
 
 	int half = img->height >> 1;
 	for (int j = 0; j < half; j++) {
-		size_t l1 = j*bytes_per_line;
-		size_t l2 = (img->height-1-j)*bytes_per_line;
+		size_t const l1 = j*bytes_per_line;
+		size_t const l2 = (img->height-1-j)*bytes_per_line;
+
 		memcpy(line,    data+l1, bytes_per_line);
 		memcpy(data+l1, data+l2, bytes_per_line);
 		memcpy(data+l2, line,    bytes_per_line);
@@ -341,7 +337,7 @@ bool TGAImage_scale(TGAImage_t* img, int32_t const new_w, int32_t const new_h){
 			while (errx >= width) {
 				errx -= width;
 				nx += bytespp;
-				memcpy(tdata+nscanline+nx, img->data+oscanline+ox, bytespp);
+				memcpy(tdata + nscanline + nx, img->data + oscanline + ox, bytespp);
 			}
 		}
 		erry += new_h;

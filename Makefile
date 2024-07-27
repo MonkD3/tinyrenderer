@@ -3,11 +3,19 @@ BUILDDIR = ./build
 TARGET   = main
 
 SYSCONF_LINK = gcc
-CPPFLAGS     = -Wall -Wextra -g
-LDFLAGS      = -Wall -fsanitize=address 
-LIBS         = -lm
-INCLUDES     = -I$(SRCDIR)/include
+LIBS         = -lm -L${HOME}/.local/lib -lbench -Wl,-rpath,${HOME}/.local/lib
+INCLUDES     = -I$(SRCDIR)/include -I${HOME}/.local/include
 
+CPPFLAGS     = -Wall -Wextra -Wshadow -g
+LDFLAGS      = -Wall -fsanitize=address 
+
+ifeq ($(MODE),fast)
+	CPPFLAGS     := -Wall -Wextra -Wshadow -O3
+	LDFLAGS      := -Wall 
+else ifeq ($(MODE),bench)
+	CPPFLAGS     := -Wall -Wextra -Wshadow -O3 -DBENCHMARK
+	LDFLAGS      := -Wall 
+endif 
 
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJECTS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCS))

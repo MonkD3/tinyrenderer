@@ -69,3 +69,74 @@ Standard deviation  : 0.0000041229
 With this, we can expect 98% of the samples to be in the range $[42.8µs, 44.5µs]$
 
 ---
+
+
+## Second attempt 
+
+This second attempt, implemented in [bbd6e6c](https://github.com/MonkD3/tinyrenderer/commit/bbd6e6cef1580f9b717a94e23c01986fa37ad455) aims at eliminating the problems observed in the first attempt. The solutions are described below :
+
+1. We now always define $x_0 < x_1$, in this manner the line will always be symmetric because it will always be drawn in the same order. (and as the algorithm is deterministic it will thus lead to the same result)
+2. We now draw the **minimum number of pixel required to have a continuous line**. This is done by using the maximum distance between the two points : $\| p_1 - p0 \|_\inf$ where $p_1 = (x_1, y_1), p_0 = (x_0, y_0)$.
+3. We now draw the line as a set of horizontal (or vertical, depending on the slope) lines of pixels, each distant from exactly one pixel. There are clear rules on which pixels to draw that depends on the error between the mathematical line and the center of the pixel.
+
+This will be further explained in a future document.
+
+
+The resulting algorithm is the following :
+
+```c 
+void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* img, TGAColor_t const * c){
+
+    // Enforce x0 < x1 
+    if (x0 > x1) {
+        int32_t tmp = x0;
+        x0 = x1;
+        x1 = tmp;
+
+        tmp = y0;
+        y0 = y1;
+        y1 = tmp;
+    }
+
+    int32_t const dx = x1 - x0;  // dx is positive by definition
+    int32_t const dy = y1 - y0;
+    int32_t const ady = abs(dy);
+    int32_t const y_direction = dy / ady;
+    int32_t e  = 0;
+
+    if (dx > ady){
+        for (int32_t i = 0; i < dx; i++){
+            TGAImage_set(img, c, x0, y0);
+            x0++;
+            e += ady;
+            if (2*e > dx){
+                e -= dx;
+                y0 += y_direction;
+            }
+        }
+    } else {
+        for (int32_t i = 0; i < ady; i++){
+            TGAImage_set(img, c, x0, y0);
+            y0 += y_direction;
+            e += dx;
+            if (2*e > ady){
+                e -= ady;
+                x0++;
+            }
+        }
+    }
+}
+```
+![Image output](./assets/001_lines.tga)
+
+### Timings 
+
+```
+========================== Benchmarks ========================
+Sample size k    = 1000
+Max iterations   = 10000        ----> Performed : 1971
+Required P-value = 0.0100000000 ----> Obtained  : 0.0097034992
+Confidence interval : 0.0000195420 +- 0.0000001896 sec
+Standard deviation  : 0.0000023235
+==============================================================
+```

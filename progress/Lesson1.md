@@ -2,7 +2,7 @@
 
 ## First attempt
 
-This is my first attempt, implemented in c7a33d5204b503130a88b0be0aa0b02d2351c9a0.
+This is my first attempt, implemented in [c7a33d5](https://github.com/MonkD3/tinyrenderer/commit/c7a33d5204b503130a88b0be0aa0b02d2351c9a0).
 
 ```c
 void line(int32_t const x0, int32_t const y0, int32_t const x1, int32_t const y1, TGAImage_t* img, TGAColor_t const * c){
@@ -33,7 +33,7 @@ We can observe that for lines close to a 45 degree angle the result is a little 
 
 The timed example is the following : on a 500x500 canvas, draw one line passing through the center with an angle ranging from 0 to 90 degrees with a step of 10 degrees (i.e. 0, 10, 20,...,90). This produces 10 lines of 500 pixels.
 
-The benchmarks are done through a library of mine : MonkD3/MicroBenchmarks@d9ee52065e719bd0716c7bae134b606952332159
+The benchmarks are done through a library of mine : [MonkD3/MicroBenchmarks](https://github.com/MonkD3/MicroBenchmarks)
 
 ```c 
     bench_t* b = bench_init(100, 1000, 0.05);

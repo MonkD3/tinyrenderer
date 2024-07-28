@@ -6,7 +6,7 @@ SYSCONF_LINK = gcc
 LIBS         = -lm -L${HOME}/.local/lib -lbench -Wl,-rpath,${HOME}/.local/lib
 INCLUDES     = -I$(SRCDIR)/include -I${HOME}/.local/include
 
-CPPFLAGS     = -Wall -Wextra -Wshadow -g
+CPPFLAGS     = -Wall -Wextra -Wshadow -g -fsanitize=address 
 LDFLAGS      = -Wall -fsanitize=address 
 
 ifeq ($(MODE),fast)

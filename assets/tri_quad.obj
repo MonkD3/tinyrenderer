@@ -1,0 +1,12 @@
+# Quad vertices
+v -0.5 -0.5 0.0
+v 0.5 -0.5 0.0
+v 0.5 0.5 0.0
+v -0.5 0.5 0.0
+
+# Additional triangle vertices 
+v 0.75 0.0 0.0
+
+# 2 faces 
+f 1 2 3 4
+f 2 3 5

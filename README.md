@@ -1,7 +1,17 @@
 # tinyrenderer
 
-My *pure* `C` implementation of [ssloy/tinyrenderer](https://github.com/ssloy/tinyrenderer).
+My *pure* `C` implementation of [ssloy/tinyrenderer](https://github.com/ssloy/tinyrenderer). In this implementation I write everything from scratch (including the helper code, such as the TGA image writer and the OBJ parser) and try to justify the algorithm with mathematics.
 
+The benchmarks for some of the algorithm are performed using a library of mine : [MonkD3/MicroBenchmarks](https://github.com/MonkD3/MicroBenchmarks)
+
+## Project structure 
+
+* [`assets/`](./assets/) : the *input* assets. For example the `.obj` files.
+* [`build/`](./build/) : the files output by the compiler (`*.o` and the executable). 
+* [`original/`](./original/) : contains the unmodified implementation of ssloy/tinyrendered, for comparison purposes.
+* [`progress/`](./progress/) : contains an explanation of my different trials for each lesson and the chain of thought behind it. 
+* [`src/`](./src/) : the source files of my implementation.
+* [`Makefile`](./Makefile) : allows to easily compile the project.
 
 ## API differences
 
@@ -80,7 +90,7 @@ The operator overloading of `=` has been modified to a `void Object_copy(Object_
 
 All default arguments are now required. This impacts the function :
 ```cpp 
-	bool write_tga_file(const char *filename, bool rle=true);
+bool write_tga_file(const char *filename, bool rle=true);
 ```
 
 which becomes (see naming convention above)

@@ -70,7 +70,6 @@ With this, we can expect 98% of the samples to be in the range $[42.8µs, 44.5µ
 
 ---
 
-
 ## Second attempt 
 
 This second attempt, implemented in [bbd6e6c](https://github.com/MonkD3/tinyrenderer/commit/bbd6e6cef1580f9b717a94e23c01986fa37ad455) aims at eliminating the problems observed in the first attempt. The solutions are described below :
@@ -80,7 +79,6 @@ This second attempt, implemented in [bbd6e6c](https://github.com/MonkD3/tinyrend
 3. We now draw the line as a set of horizontal (or vertical, depending on the slope) lines of pixels, each distant from exactly one pixel. There are clear rules on which pixels to draw that depends on the error between the mathematical line and the center of the pixel.
 
 This will be further explained in a future document.
-
 
 The resulting algorithm is the following :
 
@@ -129,6 +127,8 @@ void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* img, TGACo
 ```
 ![Image output](./assets/001_lines.tga)
 
+Note : this algorithm still has a small issue. When $y_0 = y_1$ the computation $y_{direction} = \frac{y_1 - y_0}{|y_1 - y_0|}$ is undefined. We can fix this by simply either by using a condition or its branchless equivalent.
+
 ### Timings 
 
 ```
@@ -140,3 +140,34 @@ Confidence interval : 0.0000195420 +- 0.0000001896 sec
 Standard deviation  : 0.0000023235
 ==============================================================
 ```
+
+## Mesh rendering 
+
+The second attempt yield good result and seems efficient. It is able to draw 10 lines of 500 pixels, hence a total of 5k pixels in approximately 20µs. This is equivalent to 250 millions pixels per second. 
+
+> [!NOTE] 
+> The *pixel throughput* should actually be *very slightly* superior to 250M. This is because the benchmark accounts for the sin/cos required for the angle of the lines, which is expensive but should be negligible because we compute 40 trigonometric functions and draw 5k pixels
+
+We can thus use this algorithm to render an object. This is done as follows (commented for clarity):
+
+```c 
+const int32_t dv = obj.dv; // Dimension of the vertices
+for (uint64_t i = 0; i < obj.nf; i++){  // obj.nf = number of faces (=triangles in this case)
+    uint64_t j = obj.fx[i];             // obj.fx = index of the face
+    uint64_t nvf = obj.fx[i+1] - j;     // Number of vertex for this face (=3 for triangles)
+    for (uint64_t k = 0; k < nvf; k++){
+        // Indexing is as follows :
+        // obj.v is the list of vertex coordinates : v1x v1y v1z v2x v2y v2z ...
+        // obj.fvx is the index of the vertices belonging to the face
+        int32_t x0 = (obj.v[obj.fvx[j+k]*dv] + 1.) * WIDTH / 2;
+        int32_t y0 = (obj.v[obj.fvx[j+k]*dv+1] + 1.) * HEIGHT / 2;
+        int32_t x1 = (obj.v[obj.fvx[j+(1+k)%nvf]*dv] + 1.) * WIDTH / 2;
+        int32_t y1 = (obj.v[obj.fvx[j+(1+k)%nvf]*dv + 1] + 1.) * HEIGHT / 2;
+        line(x0, y0, x1, y1, &img, &white);
+    }
+}
+```
+
+The indexing is quite hard to comprehend if you're not used to represent multi-dimensional arrays as a 1D array. The idea is that instead of making multiple indexing (e.g. `Matrix[i][j]`) we do a single indexing call with some arithmetic (e.g. `Matrix[i*ncol + j]`). We do this for the vertices.
+
+![Resulting image](./assets/002_african_head_2D_render.tga)

@@ -6,6 +6,6 @@
 
 // Draw a line with color c from (x0, y0) to (x1, y1) on the image img.
 __attribute__((nonnull))
-void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* img, TGAColor_t const * c);
+void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* const img, TGAColor_t const * const c);
 
 #endif // __DRAWING_H

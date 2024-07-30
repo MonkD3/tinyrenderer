@@ -2,7 +2,7 @@
 #include "./include/drawing.h"
 #include "include/tgaimage.h"
 
-void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* img, TGAColor_t const * c){
+void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* const img, TGAColor_t const * const c){
 
     // Enforce x0 < x1 
     if (x0 > x1) {
@@ -15,8 +15,8 @@ void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* img, TGACo
         y1 = tmp;
     }
 
-    int32_t const dx = x1 - x0;  // dx is positive by definition
-    int32_t const dy = y1 - y0;
+    int32_t const dx  = x1 - x0;  // dx is positive by definition
+    int32_t const dy  = y1 - y0;
     int32_t const ady = abs(dy);
     int32_t const y_direction = dy > 0 ? 1 : - 1;
     int32_t e  = 0;

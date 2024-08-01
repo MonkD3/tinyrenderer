@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "include/drawing.h"
 #include "include/tgaimage.h"
 #include "include/geometry.h"
@@ -53,12 +54,6 @@ void triangleMesh2D(int32_t const * const v1, int32_t const * const v2, int32_t 
     line(v3[X_COORD], v3[Y_COORD], v1[X_COORD], v1[Y_COORD], img, c);
 }
 
-static int compareY(void const * v1, void const * v2){
-    int32_t const * v1i = *((int32_t **)v1);
-    int32_t const * v2i = *((int32_t **)v2);
-    return v1i[Y_COORD] - v2i[Y_COORD];
-}
-
 void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAImage_t * const img, TGAColor_t const * const c){
     // First we sort the point by their height (y coordinates)
     int32_t const * p[3] = {v1, v2, v3};
@@ -92,13 +87,14 @@ void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAI
 
     int32_t const xdir_ml = mid[X_COORD] > low[X_COORD] ? 1 : -1;
     int32_t const xdir_hl = hi[X_COORD] > low[X_COORD] ? 1 : -1;
-    // As we draw from bottom to top : the edge with the lowest dx is on the left.
-    int32_t draw_dir = (mid[X_COORD] - low[X_COORD] > hi[X_COORD] - low[X_COORD]) ? -1 : 1;
+    // As we draw from bottom to top : The edge with the lowest angular coefficient is at the right
+    int32_t draw_dir = atan2(mid[Y_COORD] - low[Y_COORD], mid[X_COORD] - low[X_COORD]) 
+                     < atan2(hi[Y_COORD] - low[Y_COORD], hi[X_COORD] - low[X_COORD]) ? -1 : 1;
 
     int32_t e_ml = 0; // Error of left line
     int32_t e_hl = 0; // Error of right line
     for (int32_t y = low[Y_COORD]; y < mid[Y_COORD]; y++){
-        for (int32_t xd = x_ml; xd != x_hl; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+        for (int32_t xd = x_ml; draw_dir*(x_hl-xd) >= 0; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
         e_ml += adx_ml;
         x_ml += (e_ml/ady_ml)*xdir_ml;
         e_ml -= (e_ml/ady_ml)*ady_ml;
@@ -115,7 +111,7 @@ void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAI
     draw_dir = x_mh > x_hl ? -1 : 1;
     int32_t e_mh = 0;
     for (int32_t y = mid[Y_COORD]; y < hi[Y_COORD]; y++){
-        for (int32_t xd = x_mh; xd != x_hl; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+        for (int32_t xd = x_mh; draw_dir*(x_hl-xd) >= 0; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
         e_mh += adx_mh;
         x_mh += (e_mh/ady_mh)*xdir_mh;
         e_mh -= (e_mh/ady_mh)*ady_mh;

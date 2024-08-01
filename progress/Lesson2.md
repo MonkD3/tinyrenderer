@@ -221,3 +221,19 @@ Standard deviation  : 0.0000005543
 ```
 
 That's a very clear gain. We are now at 1 billion pixels per second. This is *very nice*.
+
+## Small bugfixes 
+
+When drawing the head, I encountered bugs with the rendering of the lower part of some triangles. This was
+actually due to a wrong assumption on the drawing direction of the first part. I had :
+```c 
+int32_t draw_dir = (mid[X_COORD] - low[X_COORD] > hi[X_COORD] - low[X_COORD]) ? -1 : 1;
+```
+
+Which is actually not correct because it does not take into account the $y$ coordinate. This is a problem when the $x$ coordinates are the same. I thus pivoted towards a trigonometric approach, by computing `atan2`. I did not find a better approach yet.
+
+## Final result 
+
+With all this and some additional linear algebra, we can render a "shaded" version of the head :
+
+![Result](./assets/005_african_head_filled.tga)

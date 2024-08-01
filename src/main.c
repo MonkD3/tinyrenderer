@@ -1,3 +1,4 @@
+#include "include/geometry.h"
 #include "include/tgaimage.h"
 #include "include/drawing.h"
 #include "include/objparser.h"
@@ -12,8 +13,8 @@
 const TGAColor_t white = {.r=255, .g=255, .b=255, .a=255};
 const TGAColor_t red   = {.r=255, .g=0,   .b=0,   .a=255};
 const TGAColor_t green = {.r=0,   .g=255, .b=0,   .a=255};
-const int32_t WIDTH  = 200;
-const int32_t HEIGHT = 200;
+const int32_t WIDTH  = 1000;
+const int32_t HEIGHT = 1000;
 
 int main(int argc, char** argv){
     char* filename = "output.tga";
@@ -23,23 +24,42 @@ int main(int argc, char** argv){
     TGAImage_t img;
     TGAImage_init(&img, WIDTH, HEIGHT, RGB);
     TGAImage_flip_vertically(&img);
- 
-    int32_t t0[3][2] = {{10, 70}, {50, 160},  {70, 80}}; 
-    int32_t t1[3][2] = {{180, 50},  {150, 1},   {70, 180}}; 
-    int32_t t2[3][2] = {{180, 150}, {120, 160}, {130, 180}}; 
 
-    bench_t* b = bench_init(1000, 10000, 0.01);
-    BENCH_START(b)
-    triangle2D(t0[0], t0[1], t0[2], &img, &red); 
-    triangle2D(t1[0], t1[1], t1[2], &img, &white); 
-    triangle2D(t2[0], t2[1], t2[2], &img, &green); 
-    BENCH_STOP(b);
-    BENCH_OUTPUT(b);
+    OBJModel_t obj = {0};
+    OBJModel_read_file(&obj, objname);
 
-    bench_destroy(b);
+    const int32_t dv = obj.dv;
+    double light[3] = {0, 0, -1}; // Light comes towards you
+    vecnormalize(light, 3);
+
+    for (uint64_t i = 0; i < obj.nf; i++){
+        uint64_t j = obj.fx[i];
+        double * v0 = &(obj.v[obj.fvx[j]*dv]);
+        double * v1 = &(obj.v[obj.fvx[j+1]*dv]);
+        double * v2 = &(obj.v[obj.fvx[j+2]*dv]);
+
+        double e1[3], e2[3];
+        vecaxpby(e1, v1, v0, 1.0, -1.0, 3);
+        vecaxpby(e2, v2, v0, 1.0, -1.0, 3);
+
+        double normal[3] = {e2[1]*e1[2] - e2[2]*e1[1], e2[2]*e1[0] - e2[0]*e1[2], e2[0]*e1[1] - e2[1]*e1[0]};
+        vecnormalize(normal, 3);
+
+        double scalar = vecscal(light, normal, 3);
+        if (scalar > 0){
+            int32_t v0i[2] = {(v0[0]+1.)*WIDTH/2, (v0[1]+1.)*HEIGHT/2};
+            int32_t v1i[2] = {(v1[0]+1.)*WIDTH/2, (v1[1]+1.)*HEIGHT/2};
+            int32_t v2i[2] = {(v2[0]+1.)*WIDTH/2, (v2[1]+1.)*HEIGHT/2};
+
+            TGAColor_t color = {.r=scalar*255, .g=scalar*255, .b=scalar*255, .a=255};
+            triangle2D(v0i, v1i, v2i, &img, &color);
+        }
+    }
+
     TGAImage_flip_vertically(&img);
     TGAImage_write_tga_file(&img, filename, true);
     TGAImage_destroy(&img);
+    OBJModel_destroy(&obj);
     return EXIT_SUCCESS;
 }
 

@@ -62,60 +62,66 @@ static int compareY(void const * v1, void const * v2){
 void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAImage_t * const img, TGAColor_t const * const c){
     // First we sort the point by their height (y coordinates)
     int32_t const * p[3] = {v1, v2, v3};
-    qsort(p, 3, sizeof(v1), compareY);
+    if (p[0][1] > p[1][1]){
+        int32_t const * tmp = p[0];
+        p[0] = p[1];
+        p[1] = tmp;
+    }
+    if (p[1][1] > p[2][1]){
+        int32_t const * tmp = p[1];
+        p[1] = p[2];
+        p[2] = tmp;
+    }
+    if (p[0][1] > p[1][1]){
+        int32_t const * tmp = p[0];
+        p[0] = p[1];
+        p[1] = tmp;
+    }
+
     int32_t const* low = p[0];
     int32_t const* mid = p[1];
     int32_t const* hi  = p[2];
 
-    // Draw horizontally from lo to mid by taking into account the lines low--mid and low--hi 
-    // then from mid to hi by taking into account the lines low--hi and mid--hi
     int32_t x_ml = low[X_COORD]; // Beginning of line
     int32_t x_hl = low[X_COORD]; // End of line
                                  
-    int32_t adx_ml  = abs(mid[X_COORD] - low[X_COORD]); 
-    int32_t ady_ml  = abs(mid[Y_COORD] - low[Y_COORD]);
-    int32_t adx_hl  = abs(hi[X_COORD] - low[X_COORD]); 
-    int32_t ady_hl  = abs(hi[Y_COORD] - low[Y_COORD]);
+    int32_t const adx_ml  = abs(mid[X_COORD] - low[X_COORD]); 
+    int32_t const ady_ml  = abs(mid[Y_COORD] - low[Y_COORD]);
+    int32_t const adx_hl  = abs(hi[X_COORD] - low[X_COORD]); 
+    int32_t const ady_hl  = abs(hi[Y_COORD] - low[Y_COORD]);
 
-    int32_t xdir_ml = mid[X_COORD] > low[X_COORD] ? 1 : -1;
-    int32_t xdir_hl = hi[X_COORD] > low[X_COORD] ? 1 : -1;
+    int32_t const xdir_ml = mid[X_COORD] > low[X_COORD] ? 1 : -1;
+    int32_t const xdir_hl = hi[X_COORD] > low[X_COORD] ? 1 : -1;
+    // As we draw from bottom to top : the edge with the lowest dx is on the left.
+    int32_t draw_dir = (mid[X_COORD] - low[X_COORD] > hi[X_COORD] - low[X_COORD]) ? -1 : 1;
 
     int32_t e_ml = 0; // Error of left line
     int32_t e_hl = 0; // Error of right line
     for (int32_t y = low[Y_COORD]; y < mid[Y_COORD]; y++){
-        int32_t max = x_ml > x_hl ? x_ml : x_hl;
-        int32_t min = x_ml < x_hl ? x_ml : x_hl;
-        for (int32_t xd = min; xd <= max; xd++) TGAImage_set(img, c, xd, y); // Draw the line
+        for (int32_t xd = x_ml; xd != x_hl; xd += draw_dir) TGAImage_set(img, c, xd, y); // Draw the line
         e_ml += adx_ml;
-        while (2*e_ml > ady_ml){
-            x_ml += xdir_ml;
-            e_ml -= ady_ml;
-        }
+        x_ml += (e_ml/ady_ml)*xdir_ml;
+        e_ml -= (e_ml/ady_ml)*ady_ml;
+
         e_hl += adx_hl;
-        while (2*e_hl > ady_hl){
-            x_hl += xdir_hl;
-            e_hl -= ady_hl;
-        }
+        x_hl += (e_hl/ady_hl)*xdir_hl;
+        e_hl -= (e_hl/ady_hl)*ady_hl;
     }
 
     int32_t x_mh = mid[X_COORD]; // End of line
-    int32_t adx_mh  = abs(mid[X_COORD] - hi[X_COORD]); 
-    int32_t ady_mh  = abs(mid[Y_COORD] - hi[Y_COORD]);
-    int32_t xdir_mh = hi[X_COORD] > mid[X_COORD] ? 1 : -1;
+    int32_t const adx_mh  = abs(mid[X_COORD] - hi[X_COORD]); 
+    int32_t const ady_mh  = abs(mid[Y_COORD] - hi[Y_COORD]);
+    int32_t const xdir_mh = hi[X_COORD] > mid[X_COORD] ? 1 : -1;
+    draw_dir = x_mh > x_hl ? -1 : 1;
     int32_t e_mh = 0;
     for (int32_t y = mid[Y_COORD]; y < hi[Y_COORD]; y++){
-        int32_t max = x_mh > x_hl ? x_mh : x_hl;
-        int32_t min = x_mh < x_hl ? x_mh : x_hl;
-        for (int32_t xd = min; xd <= max; xd++) TGAImage_set(img, c, xd, y); // Draw the line
+        for (int32_t xd = x_mh; xd != x_hl; xd += draw_dir) TGAImage_set(img, c, xd, y); // Draw the line
         e_mh += adx_mh;
-        while (2*e_mh > ady_mh){
-            x_mh += xdir_mh;
-            e_mh -= ady_mh;
-        }
+        x_mh += (e_mh/ady_mh)*xdir_mh;
+        e_mh -= (e_mh/ady_mh)*ady_mh;
+
         e_hl += adx_hl;
-        while (2*e_hl > ady_hl){
-            x_hl += xdir_hl;
-            e_hl -= ady_hl;
-        }
+        x_hl += (e_hl/ady_hl)*xdir_hl;
+        e_hl -= (e_hl/ady_hl)*ady_hl;
     }
 }

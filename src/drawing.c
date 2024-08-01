@@ -98,7 +98,7 @@ void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAI
     int32_t e_ml = 0; // Error of left line
     int32_t e_hl = 0; // Error of right line
     for (int32_t y = low[Y_COORD]; y < mid[Y_COORD]; y++){
-        for (int32_t xd = x_ml; xd != x_hl; xd += draw_dir) TGAImage_set(img, c, xd, y); // Draw the line
+        for (int32_t xd = x_ml; xd != x_hl; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
         e_ml += adx_ml;
         x_ml += (e_ml/ady_ml)*xdir_ml;
         e_ml -= (e_ml/ady_ml)*ady_ml;
@@ -115,7 +115,7 @@ void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAI
     draw_dir = x_mh > x_hl ? -1 : 1;
     int32_t e_mh = 0;
     for (int32_t y = mid[Y_COORD]; y < hi[Y_COORD]; y++){
-        for (int32_t xd = x_mh; xd != x_hl; xd += draw_dir) TGAImage_set(img, c, xd, y); // Draw the line
+        for (int32_t xd = x_mh; xd != x_hl; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
         e_mh += adx_mh;
         x_mh += (e_mh/ady_mh)*xdir_mh;
         e_mh -= (e_mh/ady_mh)*ady_mh;

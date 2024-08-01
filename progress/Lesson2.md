@@ -199,3 +199,25 @@ Standard deviation  : 0.0000021500
 ```
 
 This is roughly 433 millions pixels per second, or 200FPS on a 1920x1080 screen : nice.
+
+## Optimization
+
+Looking at the `perf report` I see that the majority of the time (~70%) is spent in `TGAImage_set`.
+
+A clear optimization is thus to :
+
+1. Inline the function call 
+2. Get rid of the check (unsafe, but faster). To do this I add the explicit function `TGAImage_set_unchecked`.
+
+The resulting timings are the following :
+```console
+========================== Benchmarks ========================
+Sample size k    = 1000        
+Max iterations   = 10000        ----> Performed : 6941        
+Required P-value = 0.0100000000 ----> Obtained  : 0.0058936874
+Confidence interval : 0.0000076755 +- 0.0000000452 sec
+Standard deviation  : 0.0000005543
+==============================================================
+```
+
+That's a very clear gain. We are now at 1 billion pixels per second. This is *very nice*.

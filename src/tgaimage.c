@@ -23,7 +23,19 @@ void TGAColor_init_raw(TGAColor_t* c, uint8_t* p, int32_t const bpp){
 }
 
 void TGAColor_copy(TGAColor_t const * src, TGAColor_t* dest, int32_t bpp){
-    for (int32_t i = 0; i < bpp; i++) dest->raw[i] = src->raw[i];
+    switch (bpp) {
+        case RGB:
+            dest->raw[0] = src->raw[0];
+            dest->raw[1] = src->raw[1];
+            dest->raw[2] = src->raw[2];
+            break;
+        case RGBA:
+            dest->val = src->val;
+            break;
+        case GRAYSCALE:
+            dest->raw[0] = src->raw[0];
+            break;
+    }
 }
 
 TGAColor_t* TGAImage_get(TGAImage_t const * const img, int32_t const x, int32_t const y){
@@ -354,15 +366,6 @@ bool TGAImage_scale(TGAImage_t* img, int32_t const new_w, int32_t const new_h){
 	img->height = new_h;
 	return true;
 }
-
-bool TGAImage_set(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y){
-    TGAColor_t* pixel = TGAImage_get(img, x, y);
-    if (!pixel) return false;
-
-    TGAColor_copy(c, pixel, img->bytespp);
-    return true;
-}
-
 
 void TGAImage_clear(TGAImage_t* img){
     if (img->data) memset(img->data, 0, img->width*img->height*img->bytespp);

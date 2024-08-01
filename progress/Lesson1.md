@@ -52,7 +52,7 @@ The benchmarks are done through a library of mine : [MonkD3/MicroBenchmarks](htt
     bench_destroy(b);
 ```
 
-The results are the following :
+The results are the following (**on my desktop**) :
 ```console
 [ monk tinyrenderer main ]$  MODE=bench make
 <compilation in benchmark mode>
@@ -130,6 +130,8 @@ void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* img, TGACo
 Note : this algorithm still has a small issue. When $y_0 = y_1$ the computation $y_{direction} = \frac{y_1 - y_0}{|y_1 - y_0|}$ is undefined. We can fix this by simply either by using a condition or its branchless equivalent.
 
 ### Timings 
+
+**On my desktop**
 
 ```
 ========================== Benchmarks ========================

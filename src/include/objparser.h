@@ -35,9 +35,9 @@ typedef struct {
     int64_t* ftx;   // face textures index. Size = xf[nf]
     int64_t* fnx;   // face normals index. Size = xf[nf]
     // Lists
-    double* v;      // Vertices. Size = nv*dv
-    double* t;      // texture. Size = nt*dt
-    double* n;      // Normals. Size = nn*3
+    float* v;      // Vertices. Size = nv*dv
+    float* t;      // texture. Size = nt*dt
+    float* n;      // Normals. Size = nn*3
 } OBJModel_t;
 OBJModel_t* OBJModel_init(void);
 void OBJModel_destroy(OBJModel_t* obj);

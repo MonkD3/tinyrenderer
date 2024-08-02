@@ -29,23 +29,23 @@ int main(int argc, char** argv){
     OBJModel_read_file(&obj, objname);
 
     const int32_t dv = obj.dv;
-    double light[3] = {0, 0, -1}; // Light comes towards you
+    float light[3] = {0, 0, -1.0f};
     vecnormalize(light, 3);
 
     for (uint64_t i = 0; i < obj.nf; i++){
         uint64_t j = obj.fx[i];
-        double * v0 = &(obj.v[obj.fvx[j]*dv]);
-        double * v1 = &(obj.v[obj.fvx[j+1]*dv]);
-        double * v2 = &(obj.v[obj.fvx[j+2]*dv]);
+        float * v0 = &(obj.v[obj.fvx[j]*dv]);
+        float * v1 = &(obj.v[obj.fvx[j+1]*dv]);
+        float * v2 = &(obj.v[obj.fvx[j+2]*dv]);
 
-        double e1[3], e2[3];
+        float e1[3], e2[3];
         vecaxpby(e1, v1, v0, 1.0, -1.0, 3);
         vecaxpby(e2, v2, v0, 1.0, -1.0, 3);
 
-        double normal[3] = {e2[1]*e1[2] - e2[2]*e1[1], e2[2]*e1[0] - e2[0]*e1[2], e2[0]*e1[1] - e2[1]*e1[0]};
+        float normal[3] = {e2[1]*e1[2] - e2[2]*e1[1], e2[2]*e1[0] - e2[0]*e1[2], e2[0]*e1[1] - e2[1]*e1[0]};
         vecnormalize(normal, 3);
 
-        double scalar = vecscal(light, normal, 3);
+        float scalar = vecscal(light, normal, 3);
         if (scalar > 0){
             int32_t v0i[2] = {(v0[0]+1.)*WIDTH/2, (v0[1]+1.)*HEIGHT/2};
             int32_t v1i[2] = {(v1[0]+1.)*WIDTH/2, (v1[1]+1.)*HEIGHT/2};

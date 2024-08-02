@@ -124,16 +124,16 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
     int64_t*  ftx  = NULL;
     int64_t*  fnx  = NULL;
 
-    double*   v  = malloc(sizeof(double) * nv * dv);
-    double*   t = NULL;
-    double*   n = NULL;
+    float*   v  = malloc(sizeof(float) * nv * dv);
+    float*   t = NULL;
+    float*   n = NULL;
     if (ft == FACETYPE_VTN || ft == FACETYPE_VT) {
-        t = malloc(sizeof(double) * nt * dt);
-        ftx = malloc(sizeof(int64_t) * nfv);
+        t = malloc(sizeof(*t) * nt * dt);
+        ftx = malloc(sizeof(*ftx) * nfv);
     }
     if (ft == FACETYPE_VTN || ft == FACETYPE_VN) {
-        n = malloc(sizeof(double) * nn * 3);
-        fnx = malloc(sizeof(int64_t) * nfv);
+        n = malloc(sizeof(*n) * nn * 3);
+        fnx = malloc(sizeof(*fnx) * nfv);
     }
 
     nv = 0;
@@ -156,7 +156,7 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
             char* tok = strtok(line, " ");
             for (int32_t i = 0; i < dv; i++){
                 tok = strtok(NULL, " ");
-                v[nv*dv+i] = strtod(tok, NULL);
+                v[nv*dv+i] = strtof(tok, NULL);
             }
             nv++;
         } 
@@ -164,7 +164,7 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
             char* tok = strtok(line, " ");
             for (int32_t i = 0; i < dt; i++){
                 tok = strtok(NULL, " ");
-                t[nt*dt+i] = strtod(tok, NULL);
+                t[nt*dt+i] = strtof(tok, NULL);
             }
             nt++;
         }
@@ -172,7 +172,7 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
             char* tok = strtok(line, " ");
             for (int32_t i = 0; i < 3; i++){
                 tok = strtok(NULL, " ");
-                n[nn*3+i] = strtod(tok, NULL);
+                n[nn*3+i] = strtof(tok, NULL);
             }
             nn++;
         }

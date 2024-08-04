@@ -14,4 +14,7 @@ void triangleMesh2D(Vec3i const * const v1, Vec3i const * const v2, Vec3i const 
 
 __attribute__((nonnull))
 void triangle2D(Vec3i const * v1, Vec3i const * v2, Vec3i const * v3, TGAImage_t * const img, TGAColor_t const * const c);
+
+__attribute__((nonnull))
+void triangleWithZbuf(Vec3i const * v1, Vec3i const * v2, Vec3i const * v3, int32_t * zbuf, TGAImage_t * const img, TGAColor_t const * const c);
 #endif // __DRAWING_H

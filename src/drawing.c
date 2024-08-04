@@ -192,7 +192,7 @@ void triangleWithZbuf(Vec3i const * v1, Vec3i const * v2, Vec3i const * v3, int3
         int32_t const adx = abs(x_hl - x_ml);
         int32_t const z_dir = z_ml > z_hl ? -1 : 1;
         for (int32_t xd = x_ml; draw_dir*(x_hl-xd) >= 0; xd+=draw_dir) {
-            if (zd >= zbuf[y*img->width + xd]) {
+            if (zd > zbuf[y*img->width + xd]) {
                 TGAImage_set_unchecked(img, c, xd, y); // Draw the line
                 zbuf[y*img->width + xd] = zd;
             }
@@ -234,7 +234,7 @@ void triangleWithZbuf(Vec3i const * v1, Vec3i const * v2, Vec3i const * v3, int3
         int32_t const adx = abs(x_hl - x_mh);
         int32_t const z_dir = z_mh > z_hl ? -1 : 1;
         for (int32_t xd = x_mh; draw_dir*(x_hl-xd) >= 0; xd+=draw_dir) {
-            if (zd >= zbuf[y*img->width + xd]) {
+            if (zd > zbuf[y*img->width + xd]) {
                 zbuf[y*img->width + xd] = zd;
                 TGAImage_set_unchecked(img, c, xd, y); // Draw the line
             }

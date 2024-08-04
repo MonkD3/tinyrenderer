@@ -15,7 +15,7 @@ const TGAColor_t red   = {.r=255, .g=0,   .b=0,   .a=255};
 const TGAColor_t green = {.r=0,   .g=255, .b=0,   .a=255};
 const int32_t WIDTH  = 1000;
 const int32_t HEIGHT = 1000;
-const int32_t DEPTH  = 1000000;
+const int32_t DEPTH  = 1000;
 const Vec3i scene_dim = {.x = WIDTH, .y = HEIGHT, .z = DEPTH};
 
 int main(int argc, char** argv){
@@ -31,7 +31,7 @@ int main(int argc, char** argv){
     OBJModel_read_file(&obj, objname);
 
     int32_t * zbuf = malloc(img.width*img.height*sizeof(int32_t));
-    for (int32_t i = 0; i < img.width*img.height; i++) zbuf[i] = 0;
+    for (int32_t i = 0; i < img.width*img.height; i++) zbuf[i] = INT32_MIN;
 
     const int32_t dv = obj.dv;
     Vec3f light = {.x=0, .y=0, .z=-1.0f};
@@ -51,13 +51,15 @@ int main(int argc, char** argv){
         Vec3f_normalize(&normal);
 
         float scalar = Vec3f_scal(&light, &normal);
-        TGAColor_t color = {.r=scalar*255, .g=scalar*255, .b=scalar*255, .a=255};
-        Vec3i sv0, sv1, sv2;
-        world2scene(&sv0, wv0, &scene_dim);
-        world2scene(&sv1, wv1, &scene_dim);
-        world2scene(&sv2, wv2, &scene_dim);
+        if (scalar > 0){
+            TGAColor_t color = {.r=scalar*255, .g=scalar*255, .b=scalar*255, .a=255};
+            Vec3i sv0, sv1, sv2;
+            world2scene(&sv0, wv0, &scene_dim);
+            world2scene(&sv1, wv1, &scene_dim);
+            world2scene(&sv2, wv2, &scene_dim);
 
-        triangleWithZbuf(&sv0, &sv1, &sv2, zbuf, &img, &color);
+            triangleWithZbuf(&sv0, &sv1, &sv2, zbuf, &img, &color);
+        }
     }
 
     free(zbuf);

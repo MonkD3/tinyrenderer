@@ -62,3 +62,24 @@ inline void Vec3f_cross(Vec3f* out, Vec3f const* v0, Vec3f const* v1){
     out->y = v0->z*v1->x - v0->x*v1->z;
     out->z = v0->x*v1->y - v0->y*v1->x;
 }
+
+inline void Vec3i_cross(Vec3i* out, Vec3i const* v0, Vec3i const* v1){
+    out->x = v0->y*v1->z - v0->z*v1->y;
+    out->y = v0->z*v1->x - v0->x*v1->z;
+    out->z = v0->x*v1->y - v0->y*v1->x;
+}
+
+void bounding_box(Vec3i* bbmin, Vec3i* bbmax, Vec3i const* v, int32_t nv){
+    bbmin->x = bbmin->y = bbmin->z = INT32_MAX;
+    bbmax->x = bbmax->y = bbmax->z = INT32_MIN;
+
+    for (int32_t i = 0; i < nv; i++){
+        bbmin->x = bbmin->x < v[i].x ? bbmin->x : v[i].x;
+        bbmin->y = bbmin->y < v[i].y ? bbmin->y : v[i].y;
+        bbmin->z = bbmin->z < v[i].z ? bbmin->z : v[i].z;
+
+        bbmax->x = bbmax->x > v[i].x ? bbmax->x : v[i].x;
+        bbmax->y = bbmax->y > v[i].y ? bbmax->y : v[i].y;
+        bbmax->z = bbmax->z > v[i].z ? bbmax->z : v[i].z;
+    }
+}

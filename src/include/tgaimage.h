@@ -66,8 +66,18 @@ bool TGAImage_write_tga_file(TGAImage_t const * const img, char const *filename,
 bool TGAImage_flip_horizontally(TGAImage_t* img);
 bool TGAImage_flip_vertically(TGAImage_t* img);
 bool TGAImage_scale(TGAImage_t* img, int32_t const new_w, int32_t const new_h);
-bool TGAImage_set(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y);
-void TGAImage_set_unchecked(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y);
+
+inline bool TGAImage_set(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y){
+    TGAColor_t* pixel = TGAImage_get(img, x, y);
+    if (!pixel) return false;
+
+    TGAColor_copy(c, pixel, img->bytespp);
+    return true;
+}
+inline void TGAImage_set_unchecked(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y){
+    TGAColor_t* dest = (TGAColor_t*) (img->data + (x+y*img->width)*img->bytespp);
+    for (int32_t i = 0; i < img->bytespp; i++) dest->raw[i] = c->raw[i];
+}
 void TGAImage_clear(TGAImage_t* img);
 
 #endif //__IMAGE_H__

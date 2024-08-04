@@ -24,6 +24,15 @@ float vecscal(float const* x, float const* y, int32_t const n){
     return sum;
 }
 
+// Convert the world coordinates into scene coordinates.
+// World coordinates are in [-1, 1]^3 
+// Scene coordinates are in [0, dim.x] x [0, dim.y] x [0, dim.z]
+void world2scene(Vec3i* scene, Vec3f const* world, Vec3i const* dim){
+    scene->x = (int32_t) (0.5f*(world->x+1.0f)*dim->x);
+    scene->y = (int32_t) (0.5f*(world->y+1.0f)*dim->y);
+    scene->z = (int32_t) (0.5f*(world->z+1.0f)*dim->z);
+}
+
 inline void Vec3f_axpby(Vec3f* r, Vec3f const* x, Vec3f const* y, float a, float b){
     r->raw[0] = a*x->raw[0] + b*y->raw[0];
     r->raw[1] = a*x->raw[1] + b*y->raw[1];
@@ -46,4 +55,10 @@ inline float Vec3f_norm(Vec3f const* x){
 
 inline float Vec3f_scal(Vec3f const* x, Vec3f const* y){
     return x->x*y->x + x->y*y->y + x->z*y->z;
+}
+
+inline void Vec3f_cross(Vec3f* out, Vec3f const* v0, Vec3f const* v1){
+    out->x = v0->y*v1->z - v0->z*v1->y;
+    out->y = v0->z*v1->x - v0->x*v1->z;
+    out->z = v0->x*v1->y - v0->y*v1->x;
 }

@@ -1,11 +1,16 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "include/drawing.h"
 #include "include/tgaimage.h"
+#include "include/drawing.h"
 #include "include/geometry.h"
 
-void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* const img, TGAColor_t const * const c){
+void line(Vec3i const * v0, Vec3i const * v1, TGAImage_t* const img, TGAColor_t const * const c){
+
+    int32_t x0 = v0->x;
+    int32_t y0 = v0->y;
+    int32_t x1 = v1->x;
+    int32_t y1 = v1->y;
 
     // Enforce x0 < x1 
     if (x0 > x1) {
@@ -48,53 +53,60 @@ void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, TGAImage_t* const img,
 }
 
 // Only draw the lines of the triangle
-void triangleMesh2D(int32_t const * const v1, int32_t const * const v2, int32_t const * const v3, TGAImage_t * const img, TGAColor_t const * const c){
-    line(v1[X_COORD], v1[Y_COORD], v2[X_COORD], v2[Y_COORD], img, c);
-    line(v2[X_COORD], v2[Y_COORD], v3[X_COORD], v3[Y_COORD], img, c);
-    line(v3[X_COORD], v3[Y_COORD], v1[X_COORD], v1[Y_COORD], img, c);
+void triangleMesh2D(Vec3i const * const v1, Vec3i const * const v2, Vec3i const * const v3, TGAImage_t * const img, TGAColor_t const * const c){
+    line(v1, v2, img, c);
+    line(v2, v3, img, c);
+    line(v3, v1, img, c);
 }
 
-void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAImage_t * const img, TGAColor_t const * const c){
+void triangle2D(Vec3i const * v1, Vec3i const * v2, Vec3i const * v3, TGAImage_t * const img, TGAColor_t const * const c){
     // First we sort the point by their height (y coordinates)
-    int32_t const * p[3] = {v1, v2, v3};
-    if (p[0][1] > p[1][1]){
-        int32_t const * tmp = p[0];
+    Vec3i const * p[3] = {v1, v2, v3};
+    if (p[0]->y > p[1]->y){
+        Vec3i const * tmp = p[0];
         p[0] = p[1];
         p[1] = tmp;
     }
-    if (p[1][1] > p[2][1]){
-        int32_t const * tmp = p[1];
+    if (p[1]->y > p[2]->y){
+        Vec3i const * tmp = p[1];
         p[1] = p[2];
         p[2] = tmp;
     }
-    if (p[0][1] > p[1][1]){
-        int32_t const * tmp = p[0];
+    if (p[0]->y > p[1]->y){
+        Vec3i const * tmp = p[0];
         p[0] = p[1];
         p[1] = tmp;
     }
 
-    int32_t const* low = p[0];
-    int32_t const* mid = p[1];
-    int32_t const* hi  = p[2];
+    Vec3i const* low = p[0];
+    Vec3i const* mid = p[1];
+    Vec3i const* hi  = p[2];
 
-    int32_t x_ml = low[X_COORD]; // Beginning of line
-    int32_t x_hl = low[X_COORD]; // End of line
+    int32_t x_ml = low->x; // Beginning of line
+    int32_t x_hl = low->x; // End of line
                                  
-    int32_t const adx_ml  = abs(mid[X_COORD] - low[X_COORD]); 
-    int32_t const ady_ml  = abs(mid[Y_COORD] - low[Y_COORD]);
-    int32_t const adx_hl  = abs(hi[X_COORD] - low[X_COORD]); 
-    int32_t const ady_hl  = abs(hi[Y_COORD] - low[Y_COORD]);
+    int32_t const adx_ml  = abs(mid->x - low->x); 
+    int32_t const ady_ml  = abs(mid->y - low->y);
+    int32_t const adx_hl  = abs(hi->x - low->x); 
+    int32_t const ady_hl  = abs(hi->y - low->y);
 
-    int32_t const xdir_ml = mid[X_COORD] > low[X_COORD] ? 1 : -1;
-    int32_t const xdir_hl = hi[X_COORD] > low[X_COORD] ? 1 : -1;
+    int32_t const xdir_ml = mid->x > low->x ? 1 : -1;
+    int32_t const xdir_hl = hi->x > low->x ? 1 : -1;
     // As we draw from bottom to top : The edge with the lowest angular coefficient is at the right
-    int32_t draw_dir = atan2(mid[Y_COORD] - low[Y_COORD], mid[X_COORD] - low[X_COORD]) 
-                     < atan2(hi[Y_COORD] - low[Y_COORD], hi[X_COORD] - low[X_COORD]) ? -1 : 1;
+    int32_t draw_dir = atan2(mid->y - low->y, mid->x - low->x) 
+                     < atan2(hi->y - low->y, hi->x - low->x) ? -1 : 1;
 
     int32_t e_ml = 0; // Error of left line
     int32_t e_hl = 0; // Error of right line
-    for (int32_t y = low[Y_COORD]; y < mid[Y_COORD]; y++){
-        for (int32_t xd = x_ml; draw_dir*(x_hl-xd) >= 0; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+    for (int32_t y = low->y; y < mid->y; y++){
+        switch (draw_dir) {
+            case -1:
+                for (int32_t xd = x_hl; x_ml >= xd; xd++) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+                break;
+            case 1:
+                for (int32_t xd = x_ml; x_hl >= xd; xd++) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+                break;
+        }
         e_ml += adx_ml;
         x_ml += (e_ml/ady_ml)*xdir_ml;
         e_ml -= (e_ml/ady_ml)*ady_ml;
@@ -104,14 +116,21 @@ void triangle2D(int32_t const * v1, int32_t const * v2, int32_t const * v3, TGAI
         e_hl -= (e_hl/ady_hl)*ady_hl;
     }
 
-    int32_t x_mh = mid[X_COORD]; // End of line
-    int32_t const adx_mh  = abs(mid[X_COORD] - hi[X_COORD]); 
-    int32_t const ady_mh  = abs(mid[Y_COORD] - hi[Y_COORD]);
-    int32_t const xdir_mh = hi[X_COORD] > mid[X_COORD] ? 1 : -1;
+    int32_t x_mh = mid->x; // End of line
+    int32_t const adx_mh  = abs(mid->x - hi->x); 
+    int32_t const ady_mh  = abs(mid->y - hi->y);
+    int32_t const xdir_mh = hi->x > mid->x ? 1 : -1;
     draw_dir = x_mh > x_hl ? -1 : 1;
     int32_t e_mh = 0;
-    for (int32_t y = mid[Y_COORD]; y < hi[Y_COORD]; y++){
-        for (int32_t xd = x_mh; draw_dir*(x_hl-xd) >= 0; xd += draw_dir) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+    for (int32_t y = mid->y; y < hi->y; y++){
+        switch (draw_dir) {
+            case -1:
+                for (int32_t xd = x_hl; x_mh >= xd; xd++) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+                break;
+            case 1:
+                for (int32_t xd = x_mh; x_hl >= xd; xd++) TGAImage_set_unchecked(img, c, xd, y); // Draw the line
+                break;
+        }
         e_mh += adx_mh;
         x_mh += (e_mh/ady_mh)*xdir_mh;
         e_mh -= (e_mh/ady_mh)*ady_mh;

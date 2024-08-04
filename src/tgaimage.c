@@ -367,20 +367,8 @@ bool TGAImage_scale(TGAImage_t* img, int32_t const new_w, int32_t const new_h){
 	return true;
 }
 
-__attribute__((hot))
-inline bool TGAImage_set(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y){
-    TGAColor_t* pixel = TGAImage_get(img, x, y);
-    if (!pixel) return false;
-
-    TGAColor_copy(c, pixel, img->bytespp);
-    return true;
-}
-
-__attribute__((hot))
-inline void TGAImage_set_unchecked(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y){
-    TGAColor_t* dest = (TGAColor_t*) (img->data + (x+y*img->width)*img->bytespp);
-    for (int32_t i = 0; i < img->bytespp; i++) dest->raw[i] = c->raw[i];
-}
+extern inline bool TGAImage_set(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y);
+extern inline void TGAImage_set_unchecked(TGAImage_t* img, TGAColor_t const * c, int32_t const x, int32_t const y);
 
 void TGAImage_clear(TGAImage_t* img){
     if (img->data) memset(img->data, 0, img->width*img->height*img->bytespp);

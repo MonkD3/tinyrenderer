@@ -33,6 +33,25 @@ void world2scene(Vec3i* scene, Vec3f const* world, Vec3i const* dim){
     scene->z = (int32_t) (0.5f*(world->z+1.0f)*dim->z);
 }
 
+void barycentric(Vec3f *bc, Vec3i const * v0, Vec3i const* v1, Vec3i const * v2, Vec3i const* px) {
+    Vec3f s0 = {
+        .x = v2->x - v0->x,
+        .y = v1->x - v0->x,
+        .z = v0->x - px->x,
+    };
+    Vec3f s1 = {
+        .x = v2->y - v0->y,
+        .y = v1->y - v0->y,
+        .z = v0->y - px->y,
+    };
+    Vec3f u;
+    Vec3f_cross(&u, &s0, &s1);
+
+    if (u.z) *bc = (Vec3f){.x=1.f-(u.x+u.y)/u.z, .y=u.y/u.z, .z=u.x/u.z};
+    else     *bc = (Vec3f){.x=-1, .y=-1, .z=-1};
+}
+
+
 inline void Vec3f_axpby(Vec3f* r, Vec3f const* x, Vec3f const* y, float a, float b){
     r->raw[0] = a*x->raw[0] + b*y->raw[0];
     r->raw[1] = a*x->raw[1] + b*y->raw[1];

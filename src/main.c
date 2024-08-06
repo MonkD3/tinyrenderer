@@ -24,7 +24,7 @@ int main(int argc, char** argv){
     char* objname = "assets/african_head.obj";
     if (argc > 1) objname = argv[1];
     
-    TGAImage_t img, tx;
+    TGAImage_t img, tx={0};
     TGAImage_init(&img, WIDTH, HEIGHT, RGB);
     TGAImage_read_tga_file(&tx, "assets/african_head_diffuse.tga");
     TGAImage_flip_vertically(&tx);

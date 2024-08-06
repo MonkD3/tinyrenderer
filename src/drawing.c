@@ -58,19 +58,6 @@ void Draw_tri_outline(Vec3i const v[3], TGAImage_t * const img, TGAColor_t const
     Draw_line((Vec3i[2]){v[2], v[0]}, img, c);
 }
 
-void barycentric(Vec3f *bc, Vec3i const * A, Vec3i const* B, Vec3i const * C, Vec3i const* P) {
-    Vec3f s[2], u;
-    for (int32_t i=0; i < 2; i++) {
-        s[i].x = C->raw[i]-A->raw[i];
-        s[i].y = B->raw[i]-A->raw[i];
-        s[i].z = A->raw[i]-P->raw[i];
-    }
-    Vec3f_cross(&u, &s[0], &s[1]);
-
-    if (u.z) *bc = (Vec3f){.x=1.f-(u.x+u.y)/u.z, .y=u.y/u.z, .z=u.x/u.z};
-    else     *bc = (Vec3f){.x=-1, .y=-1, .z=-1};
-}
-
 void Draw_tri_uniform(Vec3i const v[3], TGAImage_t * const img, TGAColor_t const * const c){
     Vec3i px = {0}, bbmin = {0}, bbmax = {0};
     Vec3f bc = {0};

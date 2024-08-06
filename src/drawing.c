@@ -84,7 +84,7 @@ void Draw_tri_uniform_bcz(Vec3i const v[3], float* zbuf, TGAImage_t * const img,
             px.z = bc.x * v[0].z + bc.y * v[1].z + bc.z * v[2].z;
             if (px.z > zbuf[px.x + px.y*img->width]) {
                 zbuf[px.x + px.y*img->width] = px.z;
-                TGAImage_set(img, c, px.x, px.y);
+                TGAImage_set_unchecked(img, c, px.x, px.y);
             }
         }
     }
@@ -249,11 +249,11 @@ void Draw_tri_uniform_z(Vec3i const v[3], int32_t * zbuf, TGAImage_t * const img
         int32_t const z_dir = z_ml > z_hl ? -1 : 1;
         for (int32_t xd = x_ml; draw_dir*(x_hl-xd) >= 0; xd+=draw_dir) {
             if (zd > zbuf[y*img->width + xd]) {
-                TGAImage_set_unchecked(img, c, xd, y); // Draw the line
                 zbuf[y*img->width + xd] = zd;
+                TGAImage_set_unchecked(img, c, xd, y); // Draw the line
             }
-            ez += adz;
             if (adx > 0){
+                ez += adz;
                 zd += (ez/adx)*z_dir;
                 ez -= (ez/adx)*adx;
             }
@@ -294,8 +294,8 @@ void Draw_tri_uniform_z(Vec3i const v[3], int32_t * zbuf, TGAImage_t * const img
                 zbuf[y*img->width + xd] = zd;
                 TGAImage_set_unchecked(img, c, xd, y); // Draw the line
             }
-            ez += adz;
             if (adx > 0){
+                ez += adz;
                 zd += (ez/adx)*z_dir;
                 ez -= (ez/adx)*adx;
             }

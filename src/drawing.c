@@ -4,12 +4,12 @@
 #include "include/drawing.h"
 #include "include/geometry.h"
 
-void line(Vec3i const * v0, Vec3i const * v1, TGAImage_t* const img, TGAColor_t const * const c){
+void Draw_line(Vec3i const v[2], TGAImage_t* const img, TGAColor_t const * const c){
 
-    int32_t x0 = v0->x;
-    int32_t y0 = v0->y;
-    int32_t x1 = v1->x;
-    int32_t y1 = v1->y;
+    int32_t x0 = v[0].x;
+    int32_t y0 = v[0].y;
+    int32_t x1 = v[1].x;
+    int32_t y1 = v[1].y;
 
     // Enforce x0 < x1 
     if (x0 > x1) {
@@ -52,10 +52,10 @@ void line(Vec3i const * v0, Vec3i const * v1, TGAImage_t* const img, TGAColor_t 
 }
 
 // Only draw the lines of the triangle
-void triangleMesh2D(Vec3i const * const v1, Vec3i const * const v2, Vec3i const * const v3, TGAImage_t * const img, TGAColor_t const * const c){
-    line(v1, v2, img, c);
-    line(v2, v3, img, c);
-    line(v3, v1, img, c);
+void Draw_tri_outline(Vec3i const v[3], TGAImage_t * const img, TGAColor_t const * const c){
+    Draw_line((Vec3i[2]){v[0], v[1]}, img, c);
+    Draw_line((Vec3i[2]){v[1], v[2]}, img, c);
+    Draw_line((Vec3i[2]){v[2], v[0]}, img, c);
 }
 
 void barycentric(Vec3f *bc, Vec3i const * A, Vec3i const* B, Vec3i const * C, Vec3i const* P) {
@@ -71,18 +71,17 @@ void barycentric(Vec3f *bc, Vec3i const * A, Vec3i const* B, Vec3i const * C, Ve
     else     *bc = (Vec3f){.x=-1, .y=-1, .z=-1};
 }
 
-void triangle_barycentric(Vec3i const * v1, Vec3i const * v2, Vec3i const * v3, float* zbuf, TGAImage_t * const img, TGAColor_t const * const c){
+void Draw_tri_uniform_bcz(Vec3i const v[3], float* zbuf, TGAImage_t * const img, TGAColor_t const * const c){
     Vec3i px = {0}, bbmin = {0}, bbmax = {0};
     Vec3f bc = {0};
 
-    Vec3i v[3] = {*v1, *v2, *v3};
     bounding_box(&bbmin, &bbmax, v, 3);
 
     for (px.y = bbmin.y; px.y < bbmax.y; px.y++){
         for (px.x = bbmin.x; px.x < bbmax.x; px.x++){
-            barycentric(&bc, v1, v2, v3, &px);
+            barycentric(&bc, v, v+1, v+2, &px);
             if (bc.x < 0 || bc.y < 0 || bc.z < 0) continue;
-            px.z = bc.x * v1->z + bc.y * v2->z + bc.z * v3->z;
+            px.z = bc.x * v[0].z + bc.y * v[1].z + bc.z * v[2].z;
             if (px.z > zbuf[px.x + px.y*img->width]) {
                 zbuf[px.x + px.y*img->width] = px.z;
                 TGAImage_set(img, c, px.x, px.y);
@@ -91,7 +90,7 @@ void triangle_barycentric(Vec3i const * v1, Vec3i const * v2, Vec3i const * v3, 
     }
 }
 
-void triangle_texture(Vec3i const v[3], Vec3i const n[3], float* zbuf, TGAImage_t * const img, TGAImage_t const * const t){
+void Draw_tri_texture_bcz(Vec3i const v[3], Vec3i const n[3], float* zbuf, TGAImage_t * const img, TGAImage_t const * const t){
     Vec3i px = {0}, pxt = {0}, bbmin = {0}, bbmax = {0};
     Vec3f bc = {0};
     TGAColor_t *c;
@@ -115,7 +114,7 @@ void triangle_texture(Vec3i const v[3], Vec3i const n[3], float* zbuf, TGAImage_
     }
 }
 
-void triangle2D(Vec3i const v[3], TGAImage_t * const img, TGAColor_t const * const c){
+void Draw_tri_uniform(Vec3i const v[3], TGAImage_t * const img, TGAColor_t const * const c){
     Vec3i const * p[3] = {v, v+1, v+1};
     if (p[0]->y > p[1]->y){
         Vec3i const * tmp = p[0];
@@ -196,7 +195,7 @@ void triangle2D(Vec3i const v[3], TGAImage_t * const img, TGAColor_t const * con
     }
 }
 
-void triangleWithZbuf(Vec3i const v[3], int32_t * zbuf, TGAImage_t * const img, TGAColor_t const * const c){
+void Draw_tri_uniform_z(Vec3i const v[3], int32_t * zbuf, TGAImage_t * const img, TGAColor_t const * const c){
     Vec3i const * p[3] = {v, v+1, v+2};
     if (p[0]->y > p[1]->y){
         Vec3i const * tmp = p[0];

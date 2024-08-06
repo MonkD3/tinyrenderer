@@ -75,7 +75,7 @@ int main(int argc, char** argv){
             
             Vec3i v[3] = {sv0, sv1, sv2};
             Vec3i t[3] = {st0, st1, st2};
-            triangle_texture(v, t, zbuf, &img, &texture);
+            Draw_tri_texture_bcz(v, t, zbuf, &img, &texture);
             
         }
     }

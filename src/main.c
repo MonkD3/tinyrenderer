@@ -2,6 +2,7 @@
 #include "include/tgaimage.h"
 #include "include/drawing.h"
 #include "include/objparser.h"
+#include "include/scene.h"
 #include <math.h>
 #include <float.h>
 #include <stdlib.h>
@@ -18,6 +19,10 @@ const int32_t WIDTH  = 1000;
 const int32_t HEIGHT = 1000;
 const int32_t DEPTH  = 1000;
 const Vec3i scene_dim = {.x = WIDTH, .y = HEIGHT, .z = DEPTH};
+const Scene_t scene = {
+    .camera_pos={.x=0.0f, .y=0.0f, .z=3.0f},
+    .camera_direction={.x=0.0f, .y=0.0f, .z=-1.0f}
+};
 
 int main(int argc, char** argv){
     char* filename = "output.tga";
@@ -37,17 +42,22 @@ int main(int argc, char** argv){
     float * zbuff = malloc(img.width*img.height*sizeof(float));
     for (int32_t i = 0; i < img.width*img.height; i++) zbuff[i] = FLT_MIN;
 
-    const int32_t dv = obj.dv;
-    const int32_t dt = obj.dt;
     Vec3f light = {.x=0, .y=0, .z=-1.0f};
     Vec3f_normalize(&light);
 
+    Transform3f tr; 
+    Transform3f_get_camera_projection(&tr, &scene);
+
+    float * v_tr = malloc(sizeof(float) * obj.nv * obj.dv);
     BENCH_START(b);
+    Vec3f_transform((Vec3f*)v_tr, (Vec3f*)obj.v, &tr, obj.nv);
+    const int32_t dv = obj.dv;
+    const int32_t dt = obj.dt;
     for (uint64_t i = 0; i < obj.nf; i++){
         uint64_t j = obj.fx[i];
-        Vec3f * wv0 = (Vec3f*)&(obj.v[obj.fvx[j]*dv]);
-        Vec3f * wv1 = (Vec3f*)&(obj.v[obj.fvx[j+1]*dv]);
-        Vec3f * wv2 = (Vec3f*)&(obj.v[obj.fvx[j+2]*dv]);
+        Vec3f * wv0 = (Vec3f*)&(v_tr[obj.fvx[j]*dv]);
+        Vec3f * wv1 = (Vec3f*)&(v_tr[obj.fvx[j+1]*dv]);
+        Vec3f * wv2 = (Vec3f*)&(v_tr[obj.fvx[j+2]*dv]);
 
         Vec3f e1, e2, normal;
         Vec3f_axpby(&e1, wv1, wv0, 1.0, -1.0);
@@ -79,6 +89,7 @@ int main(int argc, char** argv){
     bench_destroy(b);
 
     free(zbuff);
+    free(v_tr);
     TGAImage_flip_vertically(&img);
     TGAImage_write_tga_file(&img, filename, true);
     TGAImage_destroy(&img);

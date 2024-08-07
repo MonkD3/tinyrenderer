@@ -38,12 +38,8 @@ void TGAColor_copy(TGAColor_t const * src, TGAColor_t* dest, int32_t bpp){
     }
 }
 
-TGAColor_t* TGAImage_get(TGAImage_t const * const img, int32_t const x, int32_t const y){
-    if (!img->data || x < 0 || y < 0 || x >= img->width || y >= img->height) {
-        return NULL;
-    } 
-    return (TGAColor_t*) (img->data + (x+y*img->width)*img->bytespp);
-}
+extern inline TGAColor_t* TGAImage_get(TGAImage_t const * const img, int32_t const x, int32_t const y);
+extern inline TGAColor_t* TGAImage_get_unchecked(TGAImage_t const * const img, int32_t const x, int32_t const y);
 
 void TGAImage_init_default(TGAImage_t* img){
     img->data = NULL;

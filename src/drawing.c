@@ -63,6 +63,10 @@ void Draw_tri_uniform(Vec3i const v[3], TGAImage_t * const img, TGAColor_t const
     Vec3f bc = {0};
 
     bounding_box(&bbmin, &bbmax, v, 3);
+    bbmin.x = bbmin.x < 0 ? 0 : (bbmin.x >= img->width ? img->width-1 : bbmin.x);
+    bbmin.y = bbmin.y < 0 ? 0 : (bbmin.y >= img->height ? img->height-1 : bbmin.y);
+    bbmax.x = bbmax.x < 0 ? 0 : (bbmax.x >= img->width ? img->width-1 : bbmax.x);
+    bbmax.y = bbmax.y < 0 ? 0 : (bbmax.y >= img->height ? img->height-1 : bbmax.y);
 
     for (px.y = bbmin.y; px.y < bbmax.y; px.y++){
         for (px.x = bbmin.x; px.x < bbmax.x; px.x++){
@@ -78,6 +82,10 @@ void Draw_tri_uniform_z(Vec3i const v[3], float* zbuf, TGAImage_t * const img, T
     Vec3f bc = {0};
 
     bounding_box(&bbmin, &bbmax, v, 3);
+    bbmin.x = bbmin.x < 0 ? 0 : (bbmin.x >= img->width ? img->width-1 : bbmin.x);
+    bbmin.y = bbmin.y < 0 ? 0 : (bbmin.y >= img->height ? img->height-1 : bbmin.y);
+    bbmax.x = bbmax.x < 0 ? 0 : (bbmax.x >= img->width ? img->width-1 : bbmax.x);
+    bbmax.y = bbmax.y < 0 ? 0 : (bbmax.y >= img->height ? img->height-1 : bbmax.y);
 
     for (px.y = bbmin.y; px.y < bbmax.y; px.y++){
         for (px.x = bbmin.x; px.x < bbmax.x; px.x++){
@@ -98,6 +106,10 @@ void Draw_tri_texture(Vec3i const v[3], Vec3i const t[3], TGAImage_t * const img
     TGAColor_t *c;
 
     bounding_box(&bbmin, &bbmax, v, 3);
+    bbmin.x = bbmin.x < 0 ? 0 : (bbmin.x >= img->width ? img->width-1 : bbmin.x);
+    bbmin.y = bbmin.y < 0 ? 0 : (bbmin.y >= img->height ? img->height-1 : bbmin.y);
+    bbmax.x = bbmax.x < 0 ? 0 : (bbmax.x >= img->width ? img->width-1 : bbmax.x);
+    bbmax.y = bbmax.y < 0 ? 0 : (bbmax.y >= img->height ? img->height-1 : bbmax.y);
     for (px.y = bbmin.y; px.y < bbmax.y; px.y++){
         for (px.x = bbmin.x; px.x < bbmax.x; px.x++){
             barycentric(&bc, &v[0], &v[1], &v[2], &px);
@@ -118,6 +130,11 @@ void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float* zbuf, TGAImag
     TGAColor_t *c;
 
     bounding_box(&bbmin, &bbmax, v, 3);
+    bbmin.x = bbmin.x < 0 ? 0 : (bbmin.x >= img->width ? img->width-1 : bbmin.x);
+    bbmin.y = bbmin.y < 0 ? 0 : (bbmin.y >= img->height ? img->height-1 : bbmin.y);
+    bbmax.x = bbmax.x < 0 ? 0 : (bbmax.x >= img->width ? img->width-1 : bbmax.x);
+    bbmax.y = bbmax.y < 0 ? 0 : (bbmax.y >= img->height ? img->height-1 : bbmax.y);
+    
     for (px.y = bbmin.y; px.y < bbmax.y; px.y++){
         for (px.x = bbmin.x; px.x < bbmax.x; px.x++){
             barycentric(&bc, &v[0], &v[1], &v[2], &px);
@@ -129,7 +146,7 @@ void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float* zbuf, TGAImag
                 // Compute texture position
                 pxt.x = bc.x * t[0].x + bc.y * t[1].x + bc.z * t[2].x;
                 pxt.y = bc.x * t[0].y + bc.y * t[1].y + bc.z * t[2].y;
-                c = TGAImage_get(texture, pxt.x, pxt.y); 
+                c = TGAImage_get_unchecked(texture, pxt.x, pxt.y); 
                 TGAImage_set(img, c, px.x, px.y);
             }
         }

@@ -124,10 +124,11 @@ void Draw_tri_texture(Vec3i const v[3], Vec3i const t[3], TGAImage_t * const img
     }
 }
 
-void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float* zbuf, TGAImage_t * const img, TGAImage_t const * const texture){
+void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float const light_intensity[3], float* zbuf, TGAImage_t * const img, TGAImage_t const * const texture){
     Vec3i px = {0}, pxt = {0}, bbmin = {0}, bbmax = {0};
     Vec3f bc = {0};
     TGAColor_t *c;
+    TGAColor_t col;
 
     bounding_box(&bbmin, &bbmax, v, 3);
     bbmin.x = bbmin.x < 0 ? 0 : (bbmin.x >= img->width ? img->width-1 : bbmin.x);
@@ -146,8 +147,12 @@ void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float* zbuf, TGAImag
                 // Compute texture position
                 pxt.x = bc.x * t[0].x + bc.y * t[1].x + bc.z * t[2].x;
                 pxt.y = bc.x * t[0].y + bc.y * t[1].y + bc.z * t[2].y;
+                // Compute intensity
+                float intensity = light_intensity[0]*bc.x + light_intensity[1]*bc.y + light_intensity[2]*bc.z;
+                intensity = intensity < 0.f ? 0.f : (intensity > 1.0f ? 1.0f : intensity);
                 c = TGAImage_get_unchecked(texture, pxt.x, pxt.y); 
-                TGAImage_set(img, c, px.x, px.y);
+                col = (TGAColor_t) {.r=c->r * intensity, .g=c->g * intensity, .b=c->b * intensity, .a=255};
+                TGAImage_set(img, &col, px.x, px.y);
             }
         }
     }

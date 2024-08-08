@@ -19,7 +19,7 @@ const int32_t WIDTH  = 1000;
 const int32_t HEIGHT = 1000;
 const int32_t DEPTH  = 1000;
 const Scene_t scene = {
-    .camera_pos={.x=1.0f, .y=1.0f, .z=1.0f},
+    .camera_pos={.x=1.0f, .y=1.0f, .z=3.0f},
     .camera_vert={.x=0.0f, .y=1.0f, .z=0.0f},
     .center={.x=0.0f, .y=0.0f, .z=0.0f},
     .dim={.x=WIDTH, .y=HEIGHT, .z=DEPTH}
@@ -43,7 +43,7 @@ int main(int argc, char** argv){
     float * zbuff = malloc(img.width*img.height*sizeof(float));
     for (int32_t i = 0; i < img.width*img.height; i++) zbuff[i] = FLT_MIN;
 
-    Vec3f light = {.x=0, .y=0, .z=-1.0f};
+    Vec3f light = {.x=-1.0f, .y=1.0f, .z=-1.0f};
     Vec3f_normalize(&light);
 
     Transform3f pr = {0}; 
@@ -65,6 +65,7 @@ int main(int argc, char** argv){
     const int32_t dt = obj.dt;
     Vec3i v[3], t[3];
     Vec3f e1, e2, normal;
+    float light_intensity[3];
     for (uint64_t i = 0; i < obj.nf; i++){
         uint64_t j = obj.fx[i];
         Vec3f * wv0 = (Vec3f*)&(v_tr[obj.fvx[j]*dv]);
@@ -77,22 +78,30 @@ int main(int argc, char** argv){
         Vec3f_cross(&normal, &e2, &e1);
         Vec3f_normalize(&normal);
 
-        float scalar = Vec3f_scal(&light, &normal);
-        if (scalar > 0){
-            Vec3f * wt0 = (Vec3f*)&(obj.t[obj.ftx[j]*dt]);
-            Vec3f * wt1 = (Vec3f*)&(obj.t[obj.ftx[j+1]*dt]);
-            Vec3f * wt2 = (Vec3f*)&(obj.t[obj.ftx[j+2]*dt]);
+        Vec3f * wt0 = (Vec3f*)&(obj.t[obj.ftx[j]*dt]);
+        Vec3f * wt1 = (Vec3f*)&(obj.t[obj.ftx[j+1]*dt]);
+        Vec3f * wt2 = (Vec3f*)&(obj.t[obj.ftx[j+2]*dt]);
 
-            v[0] = (Vec3i){.x=wv0->x, .y=wv0->y, .z=wv0->z};
-            v[1] = (Vec3i){.x=wv1->x, .y=wv1->y, .z=wv1->z};
-            v[2] = (Vec3i){.x=wv2->x, .y=wv2->y, .z=wv2->z};
+        v[0] = (Vec3i){.x=wv0->x, .y=wv0->y, .z=wv0->z};
+        v[1] = (Vec3i){.x=wv1->x, .y=wv1->y, .z=wv1->z};
+        v[2] = (Vec3i){.x=wv2->x, .y=wv2->y, .z=wv2->z};
 
-            t[0] = (Vec3i) {.x=wt0->x*tx.width, .y=wt0->y*tx.height, .z=0};
-            t[1] = (Vec3i) {.x=wt1->x*tx.width, .y=wt1->y*tx.height, .z=0};
-            t[2] = (Vec3i) {.x=wt2->x*tx.width, .y=wt2->y*tx.height, .z=0};
-            
-            Draw_tri_texture_z(v, t, zbuff, &img, &tx);
-        }
+        t[0] = (Vec3i) {.x=wt0->x*tx.width, .y=wt0->y*tx.height, .z=0};
+        t[1] = (Vec3i) {.x=wt1->x*tx.width, .y=wt1->y*tx.height, .z=0};
+        t[2] = (Vec3i) {.x=wt2->x*tx.width, .y=wt2->y*tx.height, .z=0};
+
+        Vec3f * n0 = (Vec3f*)&(obj.n[obj.fnx[j]*3]);
+        Vec3f * n1 = (Vec3f*)&(obj.n[obj.fnx[j+1]*3]);
+        Vec3f * n2 = (Vec3f*)&(obj.n[obj.fnx[j+2]*3]);
+        Vec3f_normalize(n0);
+        Vec3f_normalize(n1);
+        Vec3f_normalize(n2);
+
+        light_intensity[0] = -Vec3f_scal(n0, &light);
+        light_intensity[1] = -Vec3f_scal(n1, &light);
+        light_intensity[2] = -Vec3f_scal(n2, &light);
+
+        Draw_tri_texture_z(v, t, light_intensity, zbuff, &img, &tx);
     }
     BENCH_STOP(b);
     BENCH_OUTPUT(b);

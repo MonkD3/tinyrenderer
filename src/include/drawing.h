@@ -30,5 +30,5 @@ void Draw_tri_uniform_z(Vec3i const v[3], float* zbuf, TGAImage_t * const img, T
 // Draw a triangle with vertices v with texture tx interpolated on texture vertices t
 // Use the zbuffer information
 __attribute__((nonnull))
-void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float* zbuf, TGAImage_t * const img, TGAImage_t const * const tx);
+void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float const light_intensity[3], float* zbuf, TGAImage_t * const img, TGAImage_t const * const tx);
 #endif // __DRAWING_H

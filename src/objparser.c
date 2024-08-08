@@ -1,4 +1,5 @@
 #include "include/objparser.h"
+#include "include/geometry.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -212,6 +213,13 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
                     "\t%zu texture of dimension %d\n"
                     "\t%zu normals\n",
                     filename, nv, dv, nf, ft, nt, dt, nn);
+
+    for (int32_t i = 0; i < nn; i++){
+        float norm = Vec3f_norm((Vec3f*) (n + 3*i));
+        n[i*3] *= norm;
+        n[i*3+1] *= norm;
+        n[i*3+2] *= norm;
+    }
 
     // Overwrite current object
     OBJModel_destroy(obj); 

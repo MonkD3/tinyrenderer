@@ -93,9 +93,6 @@ int main(int argc, char** argv){
         Vec3f * n0 = (Vec3f*)&(obj.n[obj.fnx[j]*3]);
         Vec3f * n1 = (Vec3f*)&(obj.n[obj.fnx[j+1]*3]);
         Vec3f * n2 = (Vec3f*)&(obj.n[obj.fnx[j+2]*3]);
-        Vec3f_normalize(n0);
-        Vec3f_normalize(n1);
-        Vec3f_normalize(n2);
 
         light_intensity[0] = -Vec3f_scal(n0, &light);
         light_intensity[1] = -Vec3f_scal(n1, &light);

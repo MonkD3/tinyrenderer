@@ -18,10 +18,11 @@ const TGAColor_t green = {.r=0,   .g=255, .b=0,   .a=255};
 const int32_t WIDTH  = 1000;
 const int32_t HEIGHT = 1000;
 const int32_t DEPTH  = 1000;
-const Vec3i scene_dim = {.x = WIDTH, .y = HEIGHT, .z = DEPTH};
 const Scene_t scene = {
-    .camera_pos={.x=0.0f, .y=0.0f, .z=3.0f},
-    .camera_direction={.x=0.0f, .y=0.0f, .z=-1.0f}
+    .camera_pos={.x=1.0f, .y=1.0f, .z=1.0f},
+    .camera_vert={.x=0.0f, .y=1.0f, .z=0.0f},
+    .center={.x=0.0f, .y=0.0f, .z=0.0f},
+    .dim={.x=WIDTH, .y=HEIGHT, .z=DEPTH}
 };
 
 int main(int argc, char** argv){
@@ -45,21 +46,31 @@ int main(int argc, char** argv){
     Vec3f light = {.x=0, .y=0, .z=-1.0f};
     Vec3f_normalize(&light);
 
-    Transform3f tr; 
-    Transform3f_get_camera_projection(&tr, &scene);
+    Transform3f pr = {0}; 
+    Transform3f_get_camera_projection(&pr, &scene);
+
+    Transform3f viewport = {0};
+    Transform3f_get_viewport(&viewport, 0, 0, &scene.dim);
+
+    Transform3f view = {0};
+    Transform3f_get_lookat(&view, &scene);
+
+    Transform3f tr = {0};
+    Transform3f_compose(&tr, (Transform3f[]){viewport, pr, view}, 3);
 
     float * v_tr = malloc(sizeof(float) * obj.nv * obj.dv);
     BENCH_START(b);
     Vec3f_transform((Vec3f*)v_tr, (Vec3f*)obj.v, &tr, obj.nv);
     const int32_t dv = obj.dv;
     const int32_t dt = obj.dt;
+    Vec3i v[3], t[3];
+    Vec3f e1, e2, normal;
     for (uint64_t i = 0; i < obj.nf; i++){
         uint64_t j = obj.fx[i];
         Vec3f * wv0 = (Vec3f*)&(v_tr[obj.fvx[j]*dv]);
         Vec3f * wv1 = (Vec3f*)&(v_tr[obj.fvx[j+1]*dv]);
         Vec3f * wv2 = (Vec3f*)&(v_tr[obj.fvx[j+2]*dv]);
 
-        Vec3f e1, e2, normal;
         Vec3f_axpby(&e1, wv1, wv0, 1.0, -1.0);
         Vec3f_axpby(&e2, wv2, wv0, 1.0, -1.0);
 
@@ -72,10 +83,9 @@ int main(int argc, char** argv){
             Vec3f * wt1 = (Vec3f*)&(obj.t[obj.ftx[j+1]*dt]);
             Vec3f * wt2 = (Vec3f*)&(obj.t[obj.ftx[j+2]*dt]);
 
-            Vec3i v[3], t[3];
-            world2scene(v, wv0, &scene_dim);
-            world2scene(v+1, wv1, &scene_dim);
-            world2scene(v+2, wv2, &scene_dim);
+            v[0] = (Vec3i){.x=wv0->x, .y=wv0->y, .z=wv0->z};
+            v[1] = (Vec3i){.x=wv1->x, .y=wv1->y, .z=wv1->z};
+            v[2] = (Vec3i){.x=wv2->x, .y=wv2->y, .z=wv2->z};
 
             t[0] = (Vec3i) {.x=wt0->x*tx.width, .y=wt0->y*tx.height, .z=0};
             t[1] = (Vec3i) {.x=wt1->x*tx.width, .y=wt1->y*tx.height, .z=0};

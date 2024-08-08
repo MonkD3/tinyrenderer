@@ -4,19 +4,25 @@
 #include "geometry.h"
 
 typedef struct {
-    Vec3f camera_pos;        // Position of the camera in the world
-    Vec3f camera_direction;  // Direction of the camera in the world
+    Vec3f camera_pos;     // Position of the camera in the world
+    Vec3f camera_vert;    // Which way points upward
+    Vec3f center;         // Center of the scene
+    Vec3i dim;            // Dimension of the scene
 } Scene_t;
 
 typedef struct {
     float t[16];
 } Transform3f;
+
+
 // Apply the translation to the transform. Equivalent to Transform3f_get_translation 
 // followed by Transform3f_compose
 void Transform3f_translate(Transform3f* transform, Vec3f const* translation);
 // Apply the scaling to the transform. Equivalent to Transform3f_get_scaling 
 // followed by Transform3f_compose
 void Transform3f_scale(Transform3f* transform, Vec3f const* scaling);
+
+void Transform3f_rotate(Transform3f* transform, Vec3f const* rotation);
 
 // Compose nt transforms into a single one
 void Transform3f_compose(Transform3f* out, Transform3f const* t, int32_t const nt);
@@ -27,6 +33,11 @@ void Transform3f_get_translation(Transform3f* out, Vec3f const* translation);
 void Transform3f_get_scaling(Transform3f* out, Vec3f const* scaling);
 // Get the transformation corresponding to the camera projection
 void Transform3f_get_camera_projection(Transform3f* out, Scene_t const * s);
+// Get the transformation corresponding to the viewport
+void Transform3f_get_viewport(Transform3f* out, int32_t x, int32_t y, Vec3i const * dim);
+
+// Get the transformation required to have the camera view
+void Transform3f_get_lookat(Transform3f* out, Scene_t const * scene);
 
 // Apply the transformation t to the vertices v_in and store them in v_out
 void Vec3f_transform(Vec3f * v_out, Vec3f const * v_in, Transform3f const * t, int32_t const n);

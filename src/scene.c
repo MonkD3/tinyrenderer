@@ -1,5 +1,7 @@
 #include "include/scene.h"
+#include "include/geometry.h"
 #include <string.h>
+#include <math.h>
 
 // Apply the translation to the transform
 void Transform3f_translate(Transform3f* transform, Vec3f const* translation){
@@ -13,6 +15,31 @@ void Transform3f_scale(Transform3f* transform, Vec3f const* scaling){
     transform->t[0] *= scaling->x;
     transform->t[5] *= scaling->y;
     transform->t[10] *= scaling->z;
+}
+
+void Transform3f_rotate(Transform3f* transform, Vec3f const* rotation){
+    Transform3f const Rx = {.t={
+        1.0f, 0.0f,               0.0f,              0.0f, 
+        0.0f, cosf(rotation->x),  sinf(rotation->x), 0.0f, 
+        0.0f, -sinf(rotation->x), cosf(rotation->y), 0.0f, 
+        0.0f, 0.0f,               0.0f,              1.0f, 
+    }};
+
+    Transform3f const Ry = {.t={
+        cosf(rotation->y),  0.0f, -sinf(rotation->y), 0.0f,
+        0.0f,               1.0f, 0.0f,               0.0f,
+        sinf(rotation->y),  0.0f, cosf(rotation->y),  0.0f,
+        0.0f,               0.0f, 0.0f,               1.0f,
+    }};
+
+    Transform3f const Rz = {.t={
+        cosf(rotation->z),  sinf(rotation->z), 0.0f, 0.0f,
+        -sinf(rotation->z), cosf(rotation->z), 0.0f, 0.0f,
+        0.0f,               0.0f,              1.0f, 0.0f, 
+        0.0f,               0.0f,              0.0f, 1.0f, 
+    }};
+
+    Transform3f_compose(transform, (Transform3f[]){*transform, Rx, Ry, Rz}, 4);
 }
 
 // Compose n transforms into a single one
@@ -45,6 +72,35 @@ void Transform3f_get_translation(Transform3f* out, Vec3f const* translation){
         0.0f, 0.0f, 0.0f, 1.0f,
     }};
 }
+
+void Transform3f_get_viewport(Transform3f* out, int32_t x, int32_t y, Vec3i const * dim){
+    *out = (Transform3f){.t={
+        0.5f*dim->x, 0.0f,        0.0f,        x + 0.5f*dim->z,
+        0.0f,        0.5f*dim->y, 0.0f,        y + 0.5f*dim->y,
+        0.0f,        0.0f,        0.5f*dim->z, 0.5f*dim->z,
+        0.0f,        0.0f,        0.0f,        1.0f
+    }};
+}
+
+void Transform3f_get_lookat(Transform3f* out, Scene_t const * scene){
+    Vec3f x, y, z;
+
+    Vec3f_axpby(&z, &scene->center, &scene->camera_pos, -1.0f, 1.0f);
+    Vec3f_normalize(&z); 
+
+    Vec3f_cross(&x, &scene->camera_vert, &z);
+    Vec3f_normalize(&x);
+    Vec3f_cross(&y, &z, &x);
+    Vec3f_normalize(&y);
+
+    *out = (Transform3f){.t={
+        x.x,  x.y,  x.z,  -scene->center.x,
+        y.x,  y.y,  y.z,  -scene->center.y,
+        z.x,  z.y,  z.z,  -scene->center.z,
+        0.0f, 0.0f, 0.0f, 1.0f
+    }};
+}
+
 // Get the transformation corresponding to a scaling
 void Transform3f_get_scaling(Transform3f* out, Vec3f const* scaling){
     *out = (Transform3f) {.t={
@@ -56,11 +112,17 @@ void Transform3f_get_scaling(Transform3f* out, Vec3f const* scaling){
 }
 
 void Transform3f_get_camera_projection(Transform3f* tr, Scene_t const * s){
+    Vec3f look_dir = {
+        .x=s->center.x - s->camera_pos.x,
+        .y=s->center.y - s->camera_pos.y,
+        .z=s->center.z - s->camera_pos.z,
+    };
+    float dist = Vec3f_norm(&look_dir);
     *tr = (Transform3f) {.t={
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, -1.0f/s->camera_pos.z, 1.0f
+        0.0f, 0.0f, -1.0f/dist, 1.0f
     }};
 }
 

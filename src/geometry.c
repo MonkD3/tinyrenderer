@@ -34,20 +34,23 @@ void world2scene(Vec3i* scene, Vec3f const* world, Vec3i const* dim){
 }
 
 void barycentric(Vec3f *bc, Vec3i const * v0, Vec3i const* v1, Vec3i const * v2, Vec3i const* px) {
-    Vec3f s0 = {
+    Vec3i s0 = {
         .x = v2->x - v0->x,
         .y = v1->x - v0->x,
         .z = v0->x - px->x,
     };
-    Vec3f s1 = {
+    Vec3i s1 = {
         .x = v2->y - v0->y,
         .y = v1->y - v0->y,
         .z = v0->y - px->y,
     };
-    Vec3f u;
-    Vec3f_cross(&u, &s0, &s1);
+    Vec3i u;
+    Vec3i_cross(&u, &s0, &s1);
 
-    if (u.z) *bc = (Vec3f){.x=1.f-(u.x+u.y)/u.z, .y=u.y/u.z, .z=u.x/u.z};
+    if (u.z) {
+        float iuz = 1.f/u.z;
+        *bc = (Vec3f){.x=1.f-(u.x+u.y)*iuz, .y=u.y*iuz, .z=u.x*iuz};
+    }
     else     *bc = (Vec3f){.x=-1, .y=-1, .z=-1};
 }
 

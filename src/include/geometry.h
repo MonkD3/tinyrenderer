@@ -22,6 +22,7 @@ typedef union {
     int32_t raw[3];
 } Vec3i;
 void bounding_box(Vec3i* bbmin, Vec3i* bbmax, Vec3i const* v, int32_t nv);
+void Vec3i_cross(Vec3i* out, Vec3i const* v1, Vec3i const* v2);
 
 typedef union {
     struct {

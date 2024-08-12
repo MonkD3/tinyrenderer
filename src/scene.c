@@ -3,6 +3,38 @@
 #include <string.h>
 #include <math.h>
 
+Scene_t _scene = {
+    .dim         = {.x=1000, .y=1000, .z=1000},
+    .camera_pos  = {.x=0.0f, .y=0.0f, .z=1.0f},
+    .camera_vert = {.x=0.0f, .y=1.0f, .z=0.0f},
+    .center      = {.x=0.0f, .y=0.0f, .z=0.0f},
+    .light       = {.x=0.0f, .y=0.0f, .z=-1.0f},
+    .modelview   = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }},
+    .viewport = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }},
+    .proj = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }},
+    .transform = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }},
+};
+
 // Apply the translation to the transform
 void Transform3f_translate(Transform3f* transform, Vec3f const* translation){
     transform->t[3] += translation->x;
@@ -82,7 +114,7 @@ void Transform3f_get_viewport(Transform3f* out, int32_t x, int32_t y, Vec3i cons
     }};
 }
 
-void Transform3f_get_lookat(Transform3f* out, Scene_t const * scene){
+void Transform3f_get_modelview(Transform3f* out, Scene_t const * scene){
     Vec3f x, y, z;
 
     Vec3f_axpby(&z, &scene->center, &scene->camera_pos, -1.0f, 1.0f);
@@ -101,6 +133,47 @@ void Transform3f_get_lookat(Transform3f* out, Scene_t const * scene){
     }};
 }
 
+void Scene_set_proj(void){ 
+    Transform3f_get_proj(&(_scene.proj), &_scene); 
+}
+
+void Scene_set_viewport(int32_t x, int32_t y){ 
+    Transform3f_get_viewport(&(_scene.viewport), x, y, &(_scene.dim)); 
+}
+
+void Scene_set_modelview(void){ 
+    Transform3f_get_modelview(&(_scene.modelview), &_scene); 
+}
+
+void Scene_set_dim(Vec3i const* v){
+    _scene.dim.x = v->x;
+    _scene.dim.y = v->y;
+    _scene.dim.z = v->z;
+}
+
+void Scene_set_campos(Vec3f const* v){
+    _scene.camera_pos.x = v->x;
+    _scene.camera_pos.y = v->y;
+    _scene.camera_pos.z = v->z;
+}
+void Scene_set_up(Vec3f const* v){
+    _scene.camera_vert.x = v->x;
+    _scene.camera_vert.y = v->y;
+    _scene.camera_vert.z = v->z;
+}
+void Scene_set_center(Vec3f const* v){
+    _scene.center.x = v->x;
+    _scene.center.y = v->y;
+    _scene.center.z = v->z;
+}
+
+void Scene_set_light(Vec3f const* v){
+    _scene.light.x = v->x;
+    _scene.light.y = v->y;
+    _scene.light.z = v->z;
+    Vec3f_normalize(&(_scene.light));
+}
+
 // Get the transformation corresponding to a scaling
 void Transform3f_get_scaling(Transform3f* out, Vec3f const* scaling){
     *out = (Transform3f) {.t={
@@ -111,7 +184,7 @@ void Transform3f_get_scaling(Transform3f* out, Vec3f const* scaling){
     }};
 }
 
-void Transform3f_get_camera_projection(Transform3f* tr, Scene_t const * s){
+void Transform3f_get_proj(Transform3f* tr, Scene_t const * s){
     Vec3f look_dir = {
         .x=s->center.x - s->camera_pos.x,
         .y=s->center.y - s->camera_pos.y,

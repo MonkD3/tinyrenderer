@@ -15,15 +15,6 @@
 const TGAColor_t white = {.r=255, .g=255, .b=255, .a=255};
 const TGAColor_t red   = {.r=255, .g=0,   .b=0,   .a=255};
 const TGAColor_t green = {.r=0,   .g=255, .b=0,   .a=255};
-const int32_t WIDTH  = 1000;
-const int32_t HEIGHT = 1000;
-const int32_t DEPTH  = 1000;
-const Scene_t scene = {
-    .camera_pos={.x=1.0f, .y=1.0f, .z=3.0f},
-    .camera_vert={.x=0.0f, .y=1.0f, .z=0.0f},
-    .center={.x=0.0f, .y=0.0f, .z=0.0f},
-    .dim={.x=WIDTH, .y=HEIGHT, .z=DEPTH}
-};
 
 int main(int argc, char** argv){
     char* filename = "output.tga";
@@ -31,7 +22,7 @@ int main(int argc, char** argv){
     if (argc > 1) objname = argv[1];
     
     TGAImage_t img, tx={0};
-    TGAImage_init(&img, WIDTH, HEIGHT, RGB);
+    TGAImage_init(&img, _scene.dim.x, _scene.dim.y, RGB);
     TGAImage_read_tga_file(&tx, "assets/african_head_diffuse.tga");
     TGAImage_flip_vertically(&tx);
 
@@ -43,28 +34,22 @@ int main(int argc, char** argv){
     float * zbuff = malloc(img.width*img.height*sizeof(float));
     for (int32_t i = 0; i < img.width*img.height; i++) zbuff[i] = FLT_MIN;
 
-    Vec3f light = {.x=-1.0f, .y=1.0f, .z=-1.0f};
-    Vec3f_normalize(&light);
+    Scene_set_light(&(Vec3f){.x=-1.0f, .y=1.0f, .z=-1.0f});
+    Scene_set_campos(&(Vec3f) {.x=1.0f, .y=1.0f, .z=3.0f});
+    Scene_set_proj();
+    Scene_set_viewport(0, 0);
+    Scene_set_modelview();
 
-    Transform3f pr = {0}; 
-    Transform3f_get_camera_projection(&pr, &scene);
-
-    Transform3f viewport = {0};
-    Transform3f_get_viewport(&viewport, 0, 0, &scene.dim);
-
-    Transform3f view = {0};
-    Transform3f_get_lookat(&view, &scene);
-
-    Transform3f tr = {0};
-    Transform3f_compose(&tr, (Transform3f[]){viewport, pr, view}, 3);
+    Transform3f_compose(&_scene.transform, (Transform3f[]){_scene.viewport, _scene.proj, _scene.modelview}, 3);
 
     float * v_tr = malloc(sizeof(float) * obj.nv * obj.dv);
     BENCH_START(b);
-    Vec3f_transform((Vec3f*)v_tr, (Vec3f*)obj.v, &tr, obj.nv);
+    Vec3f_transform((Vec3f*)v_tr, (Vec3f*)obj.v, &_scene.transform, obj.nv);
     const int32_t dv = obj.dv;
     const int32_t dt = obj.dt;
     Vec3i v[3], t[3];
     Vec3f e1, e2, normal;
+    Vec3f light = _scene.light;
     float light_intensity[3];
     for (uint64_t i = 0; i < obj.nf; i++){
         uint64_t j = obj.fx[i];

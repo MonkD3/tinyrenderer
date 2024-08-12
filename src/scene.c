@@ -75,7 +75,7 @@ void Transform3f_get_translation(Transform3f* out, Vec3f const* translation){
 
 void Transform3f_get_viewport(Transform3f* out, int32_t x, int32_t y, Vec3i const * dim){
     *out = (Transform3f){.t={
-        0.5f*dim->x, 0.0f,        0.0f,        x + 0.5f*dim->z,
+        0.5f*dim->x, 0.0f,        0.0f,        x + 0.5f*dim->x,
         0.0f,        0.5f*dim->y, 0.0f,        y + 0.5f*dim->y,
         0.0f,        0.0f,        0.5f*dim->z, 0.5f*dim->z,
         0.0f,        0.0f,        0.0f,        1.0f

@@ -53,6 +53,26 @@ void barycentric(Vec3f *bc, Vec3i const * v0, Vec3i const* v1, Vec3i const * v2,
     }
     else     *bc = (Vec3f){.x=-1, .y=-1, .z=-1};
 }
+void barycentricf(Vec3f *bc, Vec3f const * v0, Vec3f const* v1, Vec3f const * v2, Vec3i const* px) {
+    Vec3f s0 = {
+        .x = v2->x - v0->x,
+        .y = v1->x - v0->x,
+        .z = v0->x - px->x,
+    };
+    Vec3f s1 = {
+        .x = v2->y - v0->y,
+        .y = v1->y - v0->y,
+        .z = v0->y - px->y,
+    };
+    Vec3f u;
+    Vec3f_cross(&u, &s0, &s1);
+
+    if (u.z) {
+        float iuz = 1.f/u.z;
+        *bc = (Vec3f){.x=1.f-(u.x+u.y)*iuz, .y=u.y*iuz, .z=u.x*iuz};
+    }
+    else *bc = (Vec3f){.x=-1.f, .y=-1.f, .z=-1.f};
+}
 
 
 inline void Vec3f_axpby(Vec3f* r, Vec3f const* x, Vec3f const* y, float a, float b){
@@ -92,6 +112,20 @@ inline void Vec3i_cross(Vec3i* out, Vec3i const* v0, Vec3i const* v1){
 }
 
 void bounding_box(Vec3i* bbmin, Vec3i* bbmax, Vec3i const* v, int32_t nv){
+    bbmin->x = bbmin->y = bbmin->z = INT32_MAX;
+    bbmax->x = bbmax->y = bbmax->z = INT32_MIN;
+
+    for (int32_t i = 0; i < nv; i++){
+        bbmin->x = bbmin->x < v[i].x ? bbmin->x : v[i].x;
+        bbmin->y = bbmin->y < v[i].y ? bbmin->y : v[i].y;
+        bbmin->z = bbmin->z < v[i].z ? bbmin->z : v[i].z;
+
+        bbmax->x = bbmax->x > v[i].x ? bbmax->x : v[i].x;
+        bbmax->y = bbmax->y > v[i].y ? bbmax->y : v[i].y;
+        bbmax->z = bbmax->z > v[i].z ? bbmax->z : v[i].z;
+    }
+}
+void bounding_boxf(Vec3i* bbmin, Vec3i* bbmax, Vec3f const* v, int32_t nv){
     bbmin->x = bbmin->y = bbmin->z = INT32_MAX;
     bbmax->x = bbmax->y = bbmax->z = INT32_MIN;
 

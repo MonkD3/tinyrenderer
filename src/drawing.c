@@ -157,3 +157,26 @@ void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float const light_in
         }
     }
 }
+void Draw_tri_shader(Vec3f const v[3], Shader_t const * shader, void const * shdata, float* zbuf, TGAImage_t *img){
+    Vec3i px = {0}, bbmin = {0}, bbmax = {0};
+    Vec3f bc = {0};
+    TGAColor_t col;
+
+    bounding_boxf(&bbmin, &bbmax, v, 3);
+    bbmin.x = bbmin.x < 0 ? 0 : (bbmin.x >= img->width ? img->width-1 : bbmin.x);
+    bbmin.y = bbmin.y < 0 ? 0 : (bbmin.y >= img->height ? img->height-1 : bbmin.y);
+    bbmax.x = bbmax.x < 0 ? 0 : (bbmax.x >= img->width ? img->width-1 : bbmax.x);
+    bbmax.y = bbmax.y < 0 ? 0 : (bbmax.y >= img->height ? img->height-1 : bbmax.y);
+    
+    for (px.y = bbmin.y; px.y <= bbmax.y; px.y++){
+        for (px.x = bbmin.x; px.x <= bbmax.x; px.x++){
+            barycentricf(&bc, v, v+1, v+2, &px);
+            float const z = bc.x * v[0].z + bc.y * v[1].z + bc.z * v[2].z; // Interpolate z
+            if (bc.x < 0 || bc.y < 0 || bc.z < 0 || z <= zbuf[px.x + px.y*img->width]) continue; // px is out of triangle or behind another
+            if (!shader->fsh(&col, &bc, shdata)) {
+                zbuf[px.x + px.y*img->width] = z;
+                TGAImage_set(img, &col, px.x, px.y);
+            }
+        }
+    }
+}

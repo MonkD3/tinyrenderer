@@ -30,9 +30,11 @@ typedef union {
     };
     float raw[3];
 } Vec3f;
+void bounding_boxf(Vec3i* bbmin, Vec3i* bbmax, Vec3f const* v, int32_t nv);
 
 void  world2scene(Vec3i* out, Vec3f const* in, Vec3i const* dim);
 void  barycentric(Vec3f *bc, Vec3i const * v0, Vec3i const* v1, Vec3i const * v2, Vec3i const* px);
+void barycentricf(Vec3f *bc, Vec3f const * v0, Vec3f const* v1, Vec3f const * v2, Vec3i const* px);
 void  Vec3f_axpby(Vec3f* r, Vec3f const* x, Vec3f const* y, float a, float b);
 void  Vec3f_ax(Vec3f* x, float a);
 void  Vec3f_normalize(Vec3f * x);

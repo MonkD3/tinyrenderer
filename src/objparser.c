@@ -30,7 +30,10 @@ void OBJModel_destroy(OBJModel_t *obj){
         if (obj->v) free(obj->v);
         if (obj->t) free(obj->t);
         if (obj->n) free(obj->n);
-        if (obj->texture) TGAImage_destroy(obj->texture);
+        if (obj->texture){
+            TGAImage_destroy(obj->texture);
+            free(obj->texture);
+        }
         memset(obj, 0, sizeof(*obj));
     }
 }
@@ -257,6 +260,12 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
 
 bool OBJModel_read_texture(OBJModel_t *obj, const char *texturefile){
     if (!obj) return false;
-    if (obj->texture) TGAImage_destroy(obj->texture);
-    return TGAImage_read_tga_file(obj->texture, texturefile);
+    if (obj->texture) {
+        TGAImage_destroy(obj->texture);
+        free(obj->texture);
+    }
+    obj->texture = calloc(1, sizeof(*obj->texture));
+    bool ret = TGAImage_read_tga_file(obj->texture, texturefile);
+    TGAImage_flip_vertically(obj->texture);
+    return ret;
 }

@@ -1,6 +1,7 @@
 #ifndef __DRAWING_H
 #define __DRAWING_H
 
+#include "objparser.h"
 #include "shader.h"
 #include "tgaimage.h"
 #include "geometry.h"
@@ -33,6 +34,6 @@ void Draw_tri_uniform_z(Vec3i const v[3], float* zbuf, TGAImage_t * const img, T
 __attribute__((nonnull))
 void Draw_tri_texture_z(Vec3i const v[3], Vec3i const t[3], float const light_intensity[3], float* zbuf, TGAImage_t * const img, TGAImage_t const * const tx);
 
-void Draw_tri_shader(Vec3f const v[3], Shader_t const * shader, void const * shdata, float* zbuf, TGAImage_t *img);
+void Draw_tri_shader(Vec3f const v[3], Shader_t const * shader, OBJModel_t const* model, void const * shdata, float* zbuf, TGAImage_t *img);
 
 #endif // __DRAWING_H

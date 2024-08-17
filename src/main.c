@@ -4,10 +4,12 @@
 #include "include/drawing.h"
 #include "include/objparser.h"
 #include "include/scene.h"
+
+#include "benchmarks.h"
+
 #include <math.h>
 #include <float.h>
 #include <stdlib.h>
-#include "benchmarks.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -22,13 +24,12 @@ int main(int argc, char** argv){
     char* objname = "assets/african_head.obj";
     if (argc > 1) objname = argv[1];
     
-    TGAImage_t img, tx={0};
+    TGAImage_t img;
     TGAImage_init(&img, _scene.dim.x, _scene.dim.y, RGB);
-    TGAImage_read_tga_file(&tx, "assets/african_head_diffuse.tga");
-    TGAImage_flip_vertically(&tx);
 
-    OBJModel_t obj = {0};
-    OBJModel_read_file(&obj, objname);
+    OBJModel_t *obj = OBJModel_init();
+    OBJModel_read_file(obj, objname);
+    OBJModel_read_texture(obj, "assets/african_head_diffuse.tga");
 
     Scene_set_light(&(Vec3f){.x=1.0f, .y=-1.0f, .z=1.0f});
     Scene_set_campos(&(Vec3f) {.x=1.0f, .y=1.0f, .z=3.0f});
@@ -39,16 +40,16 @@ int main(int argc, char** argv){
 
     float * zbuff = malloc(img.width*img.height*sizeof(float));
     for (int32_t i = 0; i < img.width*img.height; i++) zbuff[i] = FLT_MIN;
-    void* shd = malloc(GouraudShader.datasize);
+    void* shd = malloc(TextureShader.datasize);
 
     bench_t* b = bench_init(100, 1000, 0.01);
     BENCH_START(b);
     Vec3f screen[3];
-    for (int32_t i = 0; i < obj.nf; i++){
+    for (int32_t i = 0; i < obj->nf; i++){
         for (int32_t j = 0; j < 3; j++){
-            GouraudShader.vsh(screen+j, &obj, i, j, shd);
+            TextureShader.vsh(screen+j, obj, i, j, shd);
         }
-        Draw_tri_shader(screen, &GouraudShader, shd, zbuff, &img);
+        Draw_tri_shader(screen, &TextureShader, obj, shd, zbuff, &img);
     }
     BENCH_STOP(b);
     BENCH_OUTPUT(b);
@@ -61,8 +62,8 @@ int main(int argc, char** argv){
     TGAImage_flip_vertically(&img);
     TGAImage_write_tga_file(&img, filename, true);
     TGAImage_destroy(&img);
-    TGAImage_destroy(&tx);
-    OBJModel_destroy(&obj);
+    OBJModel_destroy(obj);
+    free(obj);
     return EXIT_SUCCESS;
 }
 

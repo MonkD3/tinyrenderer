@@ -1,6 +1,7 @@
 #ifndef __OBJPARSER_H_
 #define __OBJPARSER_H_
 
+#include "tgaimage.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -38,6 +39,7 @@ typedef struct {
     float* v;      // Vertices. Size = nv*dv
     float* t;      // texture. Size = nt*dt
     float* n;      // Normals. Size = nn*3
+    TGAImage_t* texture;
 } OBJModel_t;
 OBJModel_t* OBJModel_init(void);
 void OBJModel_destroy(OBJModel_t* obj);
@@ -50,5 +52,6 @@ void OBJModel_destroy(OBJModel_t* obj);
  *          if they are malloc'd they will be freed and malloc'd
  */
 bool OBJModel_read_file(OBJModel_t* obj, char const* filename);
+bool OBJModel_read_texture(OBJModel_t* obj, char const* texturefile);
 
 #endif // __OBJPARSER_H_

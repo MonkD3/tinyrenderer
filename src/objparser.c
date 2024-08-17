@@ -1,5 +1,6 @@
 #include "include/objparser.h"
 #include "include/geometry.h"
+#include "include/tgaimage.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -15,6 +16,7 @@ OBJModel_t* OBJModel_init(void){
     out->v = NULL;
     out->t = NULL;
     out->n = NULL;
+    out->texture = NULL;
 
     return out;
 }
@@ -28,6 +30,7 @@ void OBJModel_destroy(OBJModel_t *obj){
         if (obj->v) free(obj->v);
         if (obj->t) free(obj->t);
         if (obj->n) free(obj->n);
+        if (obj->texture) TGAImage_destroy(obj->texture);
         memset(obj, 0, sizeof(*obj));
     }
 }
@@ -250,4 +253,10 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
         free(n);
         fprintf(stderr, "Unexpected token encountered while parsing faces, aborting function\n");
         return false;
+}
+
+bool OBJModel_read_texture(OBJModel_t *obj, const char *texturefile){
+    if (!obj) return false;
+    if (obj->texture) TGAImage_destroy(obj->texture);
+    return TGAImage_read_tga_file(obj->texture, texturefile);
 }

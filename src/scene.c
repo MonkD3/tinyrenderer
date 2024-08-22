@@ -1,7 +1,9 @@
 #include "include/scene.h"
 #include "include/geometry.h"
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <lapack.h>
 
 Scene_t _scene = {
     .dim         = {.x=1000, .y=1000, .z=1000},
@@ -33,6 +35,13 @@ Scene_t _scene = {
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f,
     }},
+    .transform_it = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }},
+    .is_ready = 0,
 };
 
 // Apply the translation to the transform
@@ -96,7 +105,7 @@ void Transform3f_compose(Transform3f* out, Transform3f const* t, int32_t const n
     }
 }
 
-void Transform3f_get_translation(Transform3f* out, Vec3f const* translation){
+void Transform3f_compute_translation(Transform3f* out, Vec3f const* translation){
     *out = (Transform3f) {.t={
         1.0f, 0.0f, 0.0f, translation->x,
         0.0f, 1.0f, 0.0f, translation->y,
@@ -105,7 +114,7 @@ void Transform3f_get_translation(Transform3f* out, Vec3f const* translation){
     }};
 }
 
-void Transform3f_get_viewport(Transform3f* out, int32_t x, int32_t y, Vec3i const * dim){
+void Transform3f_compute_viewport(Transform3f* out, int32_t x, int32_t y, Vec3i const * dim){
     *out = (Transform3f){.t={
         0.5f*dim->x, 0.0f,        0.0f,        x + 0.5f*dim->x,
         0.0f,        0.5f*dim->y, 0.0f,        y + 0.5f*dim->y,
@@ -114,7 +123,7 @@ void Transform3f_get_viewport(Transform3f* out, int32_t x, int32_t y, Vec3i cons
     }};
 }
 
-void Transform3f_get_modelview(Transform3f* out, Scene_t const * scene){
+void Transform3f_compute_modelview(Transform3f* out, Scene_t const * scene){
     Vec3f x, y, z;
 
     Vec3f_axpby(&z, &scene->center, &scene->camera_pos, -1.0f, 1.0f);
@@ -133,41 +142,82 @@ void Transform3f_get_modelview(Transform3f* out, Scene_t const * scene){
     }};
 }
 
+void Scene_prepare(void){
+    _scene.is_ready = 0;
+}
+
+void Scene_finish(void){
+    _scene.is_ready = 1;
+    Transform3f_compose(&_scene.transform, (Transform3f[]){_scene.viewport, _scene.proj, _scene.modelview}, 3);
+}
+
 void Scene_set_proj(void){ 
-    Transform3f_get_proj(&(_scene.proj), &_scene); 
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
+    Transform3f_compute_proj(&(_scene.proj), &_scene); 
 }
 
 void Scene_set_viewport(int32_t x, int32_t y){ 
-    Transform3f_get_viewport(&(_scene.viewport), x, y, &(_scene.dim)); 
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
+    Transform3f_compute_viewport(&(_scene.viewport), x, y, &(_scene.dim)); 
 }
 
 void Scene_set_modelview(void){ 
-    Transform3f_get_modelview(&(_scene.modelview), &_scene); 
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
+    Transform3f_compute_modelview(&(_scene.modelview), &_scene); 
 }
 
 void Scene_set_dim(Vec3i const* v){
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
     _scene.dim.x = v->x;
     _scene.dim.y = v->y;
     _scene.dim.z = v->z;
 }
 
 void Scene_set_campos(Vec3f const* v){
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
     _scene.camera_pos.x = v->x;
     _scene.camera_pos.y = v->y;
     _scene.camera_pos.z = v->z;
 }
 void Scene_set_up(Vec3f const* v){
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
     _scene.camera_vert.x = v->x;
     _scene.camera_vert.y = v->y;
     _scene.camera_vert.z = v->z;
 }
 void Scene_set_center(Vec3f const* v){
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
     _scene.center.x = v->x;
     _scene.center.y = v->y;
     _scene.center.z = v->z;
 }
 
 void Scene_set_light(Vec3f const* v){
+    if (_scene.is_ready){
+        fprintf(stderr, "Scene cannot be modified, call Scene_prepare() to modify it.");
+        return;
+    }
     _scene.light.x = v->x;
     _scene.light.y = v->y;
     _scene.light.z = v->z;
@@ -175,7 +225,7 @@ void Scene_set_light(Vec3f const* v){
 }
 
 // Get the transformation corresponding to a scaling
-void Transform3f_get_scaling(Transform3f* out, Vec3f const* scaling){
+void Transform3f_compute_scaling(Transform3f* out, Vec3f const* scaling){
     *out = (Transform3f) {.t={
         scaling->x, 0.0f,       0.0f,       0.0f,
         0.0f,       scaling->y, 0.0f,       0.0f,
@@ -184,7 +234,7 @@ void Transform3f_get_scaling(Transform3f* out, Vec3f const* scaling){
     }};
 }
 
-void Transform3f_get_proj(Transform3f* tr, Scene_t const * s){
+void Transform3f_compute_proj(Transform3f* tr, Scene_t const * s){
     Vec3f look_dir = {
         .x=s->center.x - s->camera_pos.x,
         .y=s->center.y - s->camera_pos.y,
@@ -197,6 +247,42 @@ void Transform3f_get_proj(Transform3f* tr, Scene_t const * s){
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, -1.0f/dist, 1.0f
     }};
+}
+
+void Transform3f_compute_inverse_transpose(Transform3f* tr){
+    int32_t ipiv[4] = {0, 1, 2, 3};
+    int32_t info;
+    int32_t dim = 4;
+    LAPACK_sgetrf(&dim, &dim, tr->t, &dim, ipiv, &info);
+    if (info){
+        if (info > 0) {
+            fprintf(stderr, "The factor U(%d, %d) is exactly singular, cannot compute inverse of the transformation\n", info, info);
+        } else {
+            fprintf(stderr, "The %d-th argument of SGETRF is illegal\n", -info);
+        }
+        return;
+    }
+
+    int32_t const lwork = 16;
+    float work[lwork];
+    LAPACK_sgetri(&dim, tr->t, &dim, ipiv, work, &lwork, &info);
+    if (info){
+        if (info > 0) {
+            fprintf(stderr, "The factor U(%d, %d) is exactly singular, cannot compute inverse of the transformation\n", info, info);
+        } else {
+            fprintf(stderr, "The %d-th argument of SGETRI is illegal\n", -info);
+        }
+        return;
+    }
+
+    // Transpose the inverse
+    for (int32_t i = 0; i < 4; i++){
+        for (int32_t j = 0; j < i; j++){
+            float tmp = tr->t[i*4+j];
+            tr->t[i*4+j] = tr->t[i + 4*j];
+            tr->t[i + 4*j] = tmp;
+        }
+    }
 }
 
 // Apply the transformation t to the vertices v_in and store them in v_out

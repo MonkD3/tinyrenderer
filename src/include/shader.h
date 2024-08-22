@@ -7,6 +7,7 @@
 #include "geometry.h"
 #include "objparser.h"
 #include "tgaimage.h"
+#include "scene.h"
 
 // v_out is the vertex processed by the shader 
 // model is the model containing the (world) vertex data
@@ -27,6 +28,8 @@ typedef struct {
 } Shader_t;
 
 
+// ===================== Gouraud Shader ======================
+
 void gouraud_vertex_sh(Vec3f* v_out, OBJModel_t const* model, int32_t fx, int32_t vx, void * shd);
 bool gouraud_fragment_sh(TGAColor_t* c, OBJModel_t const* model, Vec3f const * bc, void const * shd);
 typedef struct {
@@ -34,6 +37,8 @@ typedef struct {
 } GouraudShaderData_t;
 extern Shader_t const GouraudShader;
 
+
+// ===================== Simple Texture Shader ======================
 void texture_vertex_sh(Vec3f* v_out, OBJModel_t const* model, int32_t fx, int32_t vx, void * shd);
 bool texture_fragment_sh(TGAColor_t* c, OBJModel_t const* model, Vec3f const * bc, void const * shd);
 typedef struct {
@@ -41,5 +46,16 @@ typedef struct {
     Vec3f tpos[3];
 } TextureShaderData_t;
 extern Shader_t const TextureShader;
+
+
+// ===================== Texture + Normal maps shader ================
+void texture_normal_vertex_sh(Vec3f* v_out, OBJModel_t const* model, int32_t fx, int32_t vx, void * shd);
+bool texture_normal_fragment_sh(TGAColor_t* c, OBJModel_t const* model, Vec3f const * bc, void const * shd);
+typedef struct {
+    Vec3f tpos[3];
+    Transform3f uniform_M;
+    Transform3f uniform_MIT;
+} TextureNormalShaderData_t;
+extern Shader_t const TextureNormalShader;
 
 #endif // _SHADER_H

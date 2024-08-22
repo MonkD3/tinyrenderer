@@ -16,7 +16,9 @@ OBJModel_t* OBJModel_init(void){
     out->v = NULL;
     out->t = NULL;
     out->n = NULL;
-    out->texture = NULL;
+    out->dmap = NULL;
+    out->nmap = NULL;
+    out->smap = NULL;
 
     return out;
 }
@@ -30,9 +32,17 @@ void OBJModel_destroy(OBJModel_t *obj){
         if (obj->v) free(obj->v);
         if (obj->t) free(obj->t);
         if (obj->n) free(obj->n);
-        if (obj->texture){
-            TGAImage_destroy(obj->texture);
-            free(obj->texture);
+        if (obj->dmap){
+            TGAImage_destroy(obj->dmap);
+            free(obj->dmap);
+        }
+        if (obj->nmap){
+            TGAImage_destroy(obj->nmap);
+            free(obj->nmap);
+        }
+        if (obj->smap){
+            TGAImage_destroy(obj->smap);
+            free(obj->smap);
         }
         memset(obj, 0, sizeof(*obj));
     }
@@ -260,12 +270,36 @@ bool OBJModel_read_file(OBJModel_t *obj, const char *filename){
 
 bool OBJModel_read_texture(OBJModel_t *obj, const char *texturefile){
     if (!obj) return false;
-    if (obj->texture) {
-        TGAImage_destroy(obj->texture);
-        free(obj->texture);
+    if (obj->dmap) {
+        TGAImage_destroy(obj->dmap);
+        free(obj->dmap);
     }
-    obj->texture = calloc(1, sizeof(*obj->texture));
-    bool ret = TGAImage_read_tga_file(obj->texture, texturefile);
-    TGAImage_flip_vertically(obj->texture);
+    obj->dmap = calloc(1, sizeof(*obj->dmap));
+    bool ret = TGAImage_read_tga_file(obj->dmap, texturefile);
+    TGAImage_flip_vertically(obj->dmap);
+    return ret;
+}
+
+bool OBJModel_read_normalmap(OBJModel_t *obj, const char *normalfile){
+    if (!obj) return false;
+    if (obj->nmap) {
+        TGAImage_destroy(obj->nmap);
+        free(obj->nmap);
+    }
+    obj->nmap = calloc(1, sizeof(*obj->nmap));
+    bool ret = TGAImage_read_tga_file(obj->nmap, normalfile);
+    TGAImage_flip_vertically(obj->nmap);
+    return ret;
+}
+
+bool OBJModel_read_specularmap(OBJModel_t *obj, const char *specularfile){
+    if (!obj) return false;
+    if (obj->smap) {
+        TGAImage_destroy(obj->smap);
+        free(obj->smap);
+    }
+    obj->smap = calloc(1, sizeof(*obj->smap));
+    bool ret = TGAImage_read_tga_file(obj->smap, specularfile);
+    TGAImage_flip_vertically(obj->smap);
     return ret;
 }

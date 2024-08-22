@@ -39,7 +39,9 @@ typedef struct {
     float* v;      // Vertices. Size = nv*dv
     float* t;      // texture. Size = nt*dt
     float* n;      // Normals. Size = nn*3
-    TGAImage_t* texture;
+    TGAImage_t* dmap; // Diffuse mapping
+    TGAImage_t* nmap; // Normal mapping
+    TGAImage_t* smap; // Specular mapping
 } OBJModel_t;
 OBJModel_t* OBJModel_init(void);
 void OBJModel_destroy(OBJModel_t* obj);
@@ -53,5 +55,7 @@ void OBJModel_destroy(OBJModel_t* obj);
  */
 bool OBJModel_read_file(OBJModel_t* obj, char const* filename);
 bool OBJModel_read_texture(OBJModel_t* obj, char const* texturefile);
+bool OBJModel_read_normalmap(OBJModel_t* obj, char const* normalfile);
+bool OBJModel_read_specularmap(OBJModel_t* obj, char const* specularfile);
 
 #endif // __OBJPARSER_H_

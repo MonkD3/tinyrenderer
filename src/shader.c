@@ -16,6 +16,11 @@ Shader_t const TextureShader = {
     .datasize = sizeof(TextureShaderData_t)
 };
 
+Shader_t const TextureNormalShader = {
+    .vsh = texture_normal_vertex_sh,
+    .fsh = texture_normal_fragment_sh,
+    .datasize = sizeof(TextureNormalShaderData_t)
+};
 
 void gouraud_vertex_sh(Vec3f *v_out, const OBJModel_t *model, int32_t fx, int32_t vx, void *shd){
     GouraudShaderData_t * data = (GouraudShaderData_t*) shd;
@@ -46,7 +51,7 @@ void texture_vertex_sh(Vec3f* v_out, OBJModel_t const* model, int32_t fx, int32_
     data->intensity.raw[vx] = fmaxf(vintensity, 0.0f);
 
     Vec3f * texture = (Vec3f*) &model->t[model->ftx[face+vx]*model->dt];
-    data->tpos[vx] = (Vec3f) {.x=texture->x*model->texture->width, .y=texture->y*model->texture->height, .z=texture->z};
+    data->tpos[vx] = (Vec3f) {.x=texture->x*model->dmap->width, .y=texture->y*model->dmap->height, .z=texture->z};
 
     Vec3f * gl_Vertex = (Vec3f*) &model->v[model->fvx[face+vx]*model->dv];
     Vec3f_transform(v_out, gl_Vertex, &_scene.transform, 1);
@@ -61,7 +66,43 @@ bool texture_fragment_sh(TGAColor_t* c, OBJModel_t const* model, Vec3f const * b
         .z = data->tpos[0].z * bc->x + data->tpos[1].z * bc->y + data->tpos[2].z * bc->z,
     };
 
-    TGAColor_t* tcol = TGAImage_get(model->texture, tpos.x, tpos.y);
+    TGAColor_t* tcol = TGAImage_get(model->dmap, tpos.x, tpos.y);
+    *c = (TGAColor_t) {.r=tcol->r*intensity, .g=tcol->g*intensity, .b=tcol->b*intensity, .a=255};
+    return false;
+}
+
+
+void texture_normal_vertex_sh(Vec3f* v_out, OBJModel_t const* model, int32_t fx, int32_t vx, void * shd){
+    TextureNormalShaderData_t * data = (TextureNormalShaderData_t*) shd;
+
+    int32_t const face = model->fx[fx];
+
+    Vec3f * texture = (Vec3f*) &model->t[model->ftx[face+vx]*model->dt];
+    data->tpos[vx] = (Vec3f) {.x=texture->x, .y=texture->y, .z=texture->z};
+
+    Vec3f * gl_Vertex = (Vec3f*) &model->v[model->fvx[face+vx]*model->dv];
+    Vec3f_transform(v_out, gl_Vertex, &_scene.transform, 1);
+
+}
+bool texture_normal_fragment_sh(TGAColor_t* c, OBJModel_t const* model, Vec3f const * bc, void const * shd){
+    TextureNormalShaderData_t const * data = (TextureNormalShaderData_t*) shd;
+    Vec3f pos = {
+        .x = (data->tpos[0].x * bc->x + data->tpos[1].x * bc->y + data->tpos[2].x * bc->z),
+        .y = (data->tpos[0].y * bc->x + data->tpos[1].y * bc->y + data->tpos[2].y * bc->z),
+        .z = 0,
+    };
+    TGAColor_t* tcol = TGAImage_get(model->dmap, pos.x*model->dmap->width, pos.y*model->dmap->height);
+    TGAColor_t* normal_c = TGAImage_get(model->nmap, pos.x*model->nmap->width, pos.y*model->nmap->height);
+    Vec3f normal_tmp = {.x=normal_c->r/127.5f - 1.f, .y=normal_c->g/127.5f - 1.f, .z=normal_c->b/127.5f - 1.f};
+
+    Vec3f normal, light_t;
+    Vec3f_transform(&normal, &normal_tmp, &data->uniform_MIT, 1);
+    Vec3f_normalize(&normal);
+    Vec3f_transform(&light_t, &_scene.light, &data->uniform_M, 1);
+    Vec3f_normalize(&light_t);
+
+    float const intensity = fmax(0.0f, Vec3f_scal(&normal, &light_t));
+
     *c = (TGAColor_t) {.r=tcol->r*intensity, .g=tcol->g*intensity, .b=tcol->b*intensity, .a=255};
     return false;
 }

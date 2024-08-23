@@ -43,7 +43,8 @@ int main(int argc, char** argv){
 
     float * zbuff = malloc(img.width*img.height*sizeof(float));
     for (int32_t i = 0; i < img.width*img.height; i++) zbuff[i] = FLT_MIN;
-    TextureNormalShaderData_t* shd = malloc(TextureNormalShader.datasize);
+
+    TextureNormalSpecShaderData_t* shd = malloc(TextureNormalSpecShader.datasize);
     Transform3f_compose(&shd->uniform_M, (Transform3f[]){_scene.proj, _scene.modelview}, 2);
     Transform3f_compose(&shd->uniform_MIT, (Transform3f[]){_scene.proj, _scene.modelview}, 2);
     Transform3f_compute_inverse_transpose(&shd->uniform_MIT);
@@ -53,9 +54,9 @@ int main(int argc, char** argv){
     Vec3f screen[3];
     for (int32_t i = 0; i < obj->nf; i++){
         for (int32_t j = 0; j < 3; j++){
-            TextureNormalShader.vsh(screen+j, obj, i, j, shd);
+            TextureNormalSpecShader.vsh(screen+j, obj, i, j, shd);
         }
-        Draw_tri_shader(screen, &TextureNormalShader, obj, shd, zbuff, &img);
+        Draw_tri_shader(screen, &TextureNormalSpecShader, obj, shd, zbuff, &img);
     }
     BENCH_STOP(b);
     BENCH_OUTPUT(b);

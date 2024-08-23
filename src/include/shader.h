@@ -58,4 +58,14 @@ typedef struct {
 } TextureNormalShaderData_t;
 extern Shader_t const TextureNormalShader;
 
+// =================== Texture + Normal maps + Specular map ===========
+void texture_normal_spec_vertex_sh(Vec3f* v_out, OBJModel_t const* model, int32_t fx, int32_t vx, void * shd);
+bool texture_normal_spec_fragment_sh(TGAColor_t* c, OBJModel_t const* model, Vec3f const * bc, void const * shd);
+typedef struct {
+    Vec3f tpos[3];
+    Transform3f uniform_M;
+    Transform3f uniform_MIT;
+} TextureNormalSpecShaderData_t;
+extern Shader_t const TextureNormalSpecShader;
+
 #endif // _SHADER_H
